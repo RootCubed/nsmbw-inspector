@@ -1,0 +1,62 @@
+structure fBase:-:0x64
+    0x0 uniqueInstanceNum:!u32;
+    0x4 objectFlags:u32;
+    0x8 objectID:u16;
+    0xa creationDeletionStatus:u8;
+    0xb shouldDestroy:!u8;
+    0x60 vftable:ptr;
+end
+
+structure dBase:fBase:0xc
+    0x0 firstLinkedNode:ptr;
+    0x4 explanationString:stringJIS;
+    0x8 nameString:string;
+end
+
+structure Actor:dBase:0xb5
+    0x3c position:!vec3;
+    0x54 deltaPos:vec3;
+    0x6c scale:!vec3;
+    0x90 rotation:!vec3s;
+    0xa8 maxAccelZ:float;
+end
+
+structure vec3:-:0xc
+    0x0 x:float;
+    0x4 y:float;
+    0x8 z:float;
+end
+
+preview vec3
+    multi:x:y:z;
+end
+
+structure vec3s:-:0x6
+    0x0 x:s16angle;
+    0x2 y:s16angle;
+    0x4 z:s16angle;
+end
+
+preview vec3s
+    multi:x:y:z;
+end
+
+display fBase
+    textbox:"Instance Number":uniqueInstanceNum;
+    textbox:"Object ID":objectID;
+    textbox:"Vftable":vftable;
+end
+
+display dBase
+    textbox:"Object Name":nameString;
+    textbox:"Explanation String":explanationString;
+end
+
+display Actor
+    textbox:"Position":position;
+    textbox:"Rotation (Degrees)":rotation;
+    textbox:"Scale":scale;
+    textbox:"Maximum Z Acceleration":maxAccelZ;
+end
+
+object PLAYER:Actor;

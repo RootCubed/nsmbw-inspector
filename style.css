@@ -1,0 +1,137 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 0;
+    margin: 0;
+    background-color: white;
+    height: 100%;
+    width: 100%;
+}
+
+#tabContainer {
+    overflow: hidden;
+    border: 1px solid #888;
+    background-color: #eee;
+}
+
+.header-label {
+    background-color: inherit;
+    float: left;
+    border-right: 1px solid #555;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.header-label.selected {
+    background-color: #ddd;
+}
+
+#header-hook {
+    background-color: inherit;
+    float: right;
+    padding: 10px 20px;
+    cursor: pointer;
+    color: blue;
+}
+
+#header-hook:hover {
+    background-color: #ddd;
+}
+
+#header-hook:active {
+    background-color: #bbb;
+}
+
+#main {
+    position: absolute;
+    top: 43px;
+    bottom: 0;
+    width: 100%;
+}
+
+#mainLeft {
+    height: 100%;
+    width: 60%;
+    border-right: 1px solid black;
+    overflow-y: scroll;
+    float: left;
+}
+
+#mainRight {
+    height: 100%;
+    width: calc(40% - 21px);
+    overflow-y: scroll;
+    float: right;
+    padding: 0 10px;
+}
+
+.function {
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.2fr;
+    grid-template-rows: 20px;
+    align-items: center;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.function:hover {
+    background-color: #eee;
+}
+
+.function.selected {
+    outline: 1px dashed #888;
+    background-color: #eee;
+}
+
+.functionAddr {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.actorName {
+    text-align: left;
+    font-size: 15px;
+}
+
+.PTMFRemove {
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.PTMFRemove:hover {
+    font-size: 20px;
+}
+
+#funcAt {
+    text-align: center;
+    display: block;
+    font-weight: bold;
+}
+
+#mainRight span {
+    display: block;
+}
+
+.funcInfo {
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 40% 1fr;
+    align-items: center;
+    box-sizing: border-box;
+    outline: 1px solid black;
+    text-align: center;
+}
+
+:not(.editable).values:focus, #mainLeft:focus {
+    outline: none;
+}
+
+.values.editable {
+    outline: 1px solid;
+}
+
+.values.hex, .values.hexdump {
+    font-family: 'Courier New', Courier, monospace;
+}
