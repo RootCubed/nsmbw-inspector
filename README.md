@@ -6,7 +6,7 @@ NSMBW Inspector is built with electron and native modules compiled from [aldelar
 ## Compatibility
 The tool currently only supports Windows. Linux support is in consideration. For MacOS compatibility, the [Dolphin memory engine](https://github.com/aldelaro5/Dolphin-memory-engine) would have to receive MacOS support first.
 ## Installation
-You can download the latest executable from the [releases](releases).
+You can download the latest executable from the [releases](https://github.com/LetsPlentendo-CH/nsmbw-inspector/releases).
 ## Running from source
 1. Clone the repository: `git clone --recursive https://github.com/LetsPlentendo-CH/nsmbw-inspector.git`
 2. Navigate inside the project
