@@ -229,12 +229,14 @@ NAN_METHOD(writeValues) {
 NAN_MODULE_INIT(init) {
 	DolphinComm::DolphinAccessor::init();
 	Nan::SetMethod(target, "hook", hook);
+	Nan::SetMethod(target, "readPointer", readU32);
 	Nan::SetMethod(target, "readU32", readU32);
 	Nan::SetMethod(target, "readU16", readU16);
 	Nan::SetMethod(target, "readU8", readU8);
 	Nan::SetMethod(target, "readValues", readValues);
 	Nan::SetMethod(target, "readFloat", readFloat);
 
+	Nan::SetMethod(target, "writePointer", writeU32);
 	Nan::SetMethod(target, "writeU32", writeU32);
 	Nan::SetMethod(target, "writeU16", writeU16);
 	Nan::SetMethod(target, "writeU8", writeU8);
