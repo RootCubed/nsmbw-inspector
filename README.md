@@ -7,16 +7,31 @@ NSMBW Inspector is built with electron and native modules compiled from [aldelar
 The tool currently only supports Windows. Linux support is in consideration. For MacOS compatibility, the [Dolphin memory engine](https://github.com/aldelaro5/Dolphin-memory-engine) would have to receive MacOS support first.
 ## Installation
 You can download the latest executable from the [releases](https://github.com/LetsPlentendo-CH/nsmbw-inspector/releases).
+### Note for Linux users
+If you're on Linux, you will have to run the following commands in the directory of the executable after you've downloaded it:
+```shell
+sudo setcap cap_sys_ptrace=eip nsmbwinspector
+sudo chown root:root chrome-sandbox
+sudo chmod 4755 chrome-sandbox
+```
 ## Running from source
 1. Clone the repository: `git clone --recursive https://github.com/LetsPlentendo-CH/nsmbw-inspector.git`
 2. Navigate inside the project
 3. Run `npm install`
 4. To launch the app, run `npm start`
 
-If you want to build an executable, run these additional steps:
+If you want to build an executable, run these additional steps (This might be required if you're on Linux):
 
 5. deploy using `npm run make`
-6. copy `structures.txt` from the root folder to `out/nsmbwinspector-win32-x64`
+6. copy `structures.txt` from the root folder to `out/nsmbwinspector-win32-x64` (or `out/nsmbwinspector-linux-x64`, if you're on Linux)
+7. (Linux only) Install `patchelf` and, in `out/nsmbwinspector-linux-x64`, run the following commands:
+```shell
+sudo setcap cap_sys_ptrace=eip nsmbwinspector
+sudo chown root:root chrome-sandbox
+sudo chmod 4755 chrome-sandbox
+patchelf --set-rpath ./ nsmbwinspector # the first command removes some enviroment variables, we add RPATH back
+```
+
 ## Structure files
 NSMBW Inspector loads in a text file that describes classes and their fields on launch.
 
