@@ -1,247 +1,66 @@
-#include "Dolphin-memory-engine/Source/DolphinProcess/DolphinAccessor.h"
-#include "Dolphin-memory-engine/Source/Common/CommonUtils.h"
+#include "DolphinReader.h"
 
 #include <iostream>
 #include <utility>
-#include <map>
 
-#include <nan.h>
-
-std::map<unsigned int, std::pair<u32, unsigned int>> regAddrs;
-
-unsigned int currentID = 0;
 
 char memoryBuffer[0x10000];
 
-NAN_METHOD(hook) {
+u32 dist;
+
+DolphinComm::DolphinAccessor::DolphinStatus DolphinReader::hook() {
 	DolphinComm::DolphinAccessor::hook();
 
-	int status = (int) DolphinComm::DolphinAccessor::getStatus();
+	dist = DolphinComm::DolphinAccessor::getMEM1ToMEM2Distance();
 
-	v8::Local<v8::Number> res = Nan::New(status);
-	
-	info.GetReturnValue().Set(res);
+	return DolphinComm::DolphinAccessor::getStatus();
 }
 
-NAN_METHOD(readU32) {
-	if (info.Length() != 1) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
+u32 DolphinReader::readU32(u32 address) {
+	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address, dist), memoryBuffer, 4, true);
 
-	if (!info[0]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument type (must be integer)");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address), memoryBuffer, 4, true);
-
-	info.GetReturnValue().Set(Nan::New(*(u32 *) memoryBuffer));
+	return *(u32*) memoryBuffer;
 }
 
-NAN_METHOD(readU16) {
-	if (info.Length() != 1) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
+u16 DolphinReader::readU16(u16 address) {
+	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address, dist), memoryBuffer, 2, true);
 
-	if (!info[0]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument type (must be integer)");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address), memoryBuffer, 2, true);
-
-	info.GetReturnValue().Set(Nan::New(*(u16 *) memoryBuffer));
+	return *(u16*) memoryBuffer;
 }
 
-NAN_METHOD(readU8) {
-	if (info.Length() != 1) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
+u8 DolphinReader::readU16(u8 address) {
+	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address, dist), memoryBuffer, 1, true);
 
-	if (!info[0]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument type (must be integer)");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address), memoryBuffer, 1, true);
-
-	info.GetReturnValue().Set(Nan::New(*(u8 *) memoryBuffer));
+	return *(u8*) memoryBuffer;
 }
 
-NAN_METHOD(readFloat) {
-	if (info.Length() != 1) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
+float DolphinReader::readFloat(u32 address) {
+	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address, dist), memoryBuffer, 4, true);
 
-	if (!info[0]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument type (must be integer)");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address), memoryBuffer, 4, true);
-
-	float res = *(float *) &memoryBuffer;
-
-	info.GetReturnValue().Set(Nan::New(res));
+	return *(float*) memoryBuffer;
 }
 
-NAN_METHOD(readValues) {
-	if (info.Length() != 2) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
-
-	if (!info[0]->IsNumber() || !info[1]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument types");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-	int size = info[1]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address), memoryBuffer, size, false);
-	v8::Local<v8::Array> arr = Nan::New<v8::Array>(size);
-
-	for (int i = 0; i < size; i++) {
-		Nan::Set(arr, i, Nan::New(memoryBuffer[i]));
-	}
-
-	info.GetReturnValue().Set(arr);
+void *DolphinReader::readValues(u32 address, u16 size) {
+	DolphinComm::DolphinAccessor::readFromRAM(Common::dolphinAddrToOffset(address, dist), memoryBuffer, size, false);
+	return memoryBuffer;
 }
 
-NAN_METHOD(writeU32) {
-	if (info.Length() != 2) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
-
-	if (!info[0]->IsNumber() || !info[1]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument type");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-	u32 value = info[1]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address), (char *) &value, 4, true);
+void DolphinReader::writeU32(u32 address, u32 value) {
+	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address, dist), (char *) &value, 4, true);
 }
 
-NAN_METHOD(writeU16) {
-	if (info.Length() != 2) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
-
-	if (!info[0]->IsNumber() || !info[1]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument type");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-	u16 value = info[1]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address), (char *) &value, 2, true);
+void DolphinReader::writeU16(u32 address, u16 value) {
+	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address, dist), (char *) &value, 2, true);
 }
 
-NAN_METHOD(writeU8) {
-	if (info.Length() != 2) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
-
-	if (!info[0]->IsNumber() || !info[1]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument type");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-	u8 value = info[1]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address), (char *) &value, 1, true);
+void DolphinReader::writeU8(u32 address, u8 value) {
+	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address, dist), (char *) &value, 1, true);
 }
 
-NAN_METHOD(writeFloat) {
-	if (info.Length() != 2) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
-
-	if (!info[0]->IsNumber() || !info[1]->IsNumber()) {
-		Nan::ThrowTypeError("Wrong argument type");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-	float value = info[1]->NumberValue(context).FromJust();
-
-	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address), (char *) &value, 4, true);
+void DolphinReader::writeFloat(u32 address, float value) {
+	writeU32(address, *(u32 *) &value);
 }
 
-NAN_METHOD(writeValues) {
-	if (info.Length() != 2) {
-		Nan::ThrowTypeError("Wrong number of arguments");
-		return;
-	}
-
-	if (!info[0]->IsNumber() || !info[1]->IsArray()) {
-		Nan::ThrowTypeError("Wrong argument type");
-		return;
-	}
-
-	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-
-	u32 address = info[0]->NumberValue(context).FromJust();
-	Nan::TypedArrayContents<uint8_t> data(info[1]);
-
-	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address), (char *) *data, data.length(), true);
+void DolphinReader::writeValues(u32 address, void *data, u16 size) {
+	DolphinComm::DolphinAccessor::writeToRAM(Common::dolphinAddrToOffset(address, dist), (char *) data, size, true);
 }
-
-NAN_MODULE_INIT(init) {
-	DolphinComm::DolphinAccessor::init();
-	Nan::SetMethod(target, "hook", hook);
-	Nan::SetMethod(target, "readPointer", readU32);
-	Nan::SetMethod(target, "readU32", readU32);
-	Nan::SetMethod(target, "readU16", readU16);
-	Nan::SetMethod(target, "readU8", readU8);
-	Nan::SetMethod(target, "readValues", readValues);
-	Nan::SetMethod(target, "readFloat", readFloat);
-
-	Nan::SetMethod(target, "writePointer", writeU32);
-	Nan::SetMethod(target, "writeU32", writeU32);
-	Nan::SetMethod(target, "writeU16", writeU16);
-	Nan::SetMethod(target, "writeU8", writeU8);
-	Nan::SetMethod(target, "writeValues", writeValues);
-	Nan::SetMethod(target, "writeFloat", writeFloat);
-}
-
-NAN_MODULE_WORKER_ENABLED(hook, init);

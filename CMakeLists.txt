@@ -9,7 +9,13 @@ add_executable(nsmbw-inspector
         vendor/imgui_impl_glfw.cpp
         vendor/imgui_impl_opengl3.h
         vendor/imgui_impl_opengl3.cpp
-        src/main.cpp)
+        src/main.cpp
+        DolphinReader/DolphinReader.cpp
+        DolphinReader/Dolphin-memory-engine/Source/Common/MemoryCommon.cpp
+        DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/DolphinAccessor.cpp
+        DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/Windows/WindowsDolphinProcess.cpp)
+
+configure_file(iosevka-ss01-regular.ttf ${CMAKE_CURRENT_BINARY_DIR}/Debug COPYONLY)
 
 # glad
 set(GLAD_DIR "${LIBRARIES_DIR}/glad")
@@ -35,7 +41,8 @@ add_library("imgui"
         "${IMGUI_DIR}/src/imgui.cpp"
         "${IMGUI_DIR}/src/imgui_draw.cpp"
         "${IMGUI_DIR}/src/imgui_demo.cpp"
-        "${IMGUI_DIR}/src/imgui_widgets.cpp")
+        "${IMGUI_DIR}/src/imgui_widgets.cpp"
+        "${IMGUI_DIR}/src/imgui_tables.cpp")
 target_include_directories("imgui" PRIVATE "${IMGUI_DIR}/include")
 target_include_directories(${PROJECT_NAME} PRIVATE "${IMGUI_DIR}/include")
 target_link_libraries(${PROJECT_NAME} "imgui" "${CMAKE_DL_LIBS}")
