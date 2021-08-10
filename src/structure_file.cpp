@@ -1,4 +1,4 @@
-#include "../DolphinReader/DolphinReader.h"
+#include "DolphinReader/DolphinReader.h"
 #include "structure_file.h"
 
 #include <unordered_set>

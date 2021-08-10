@@ -1,15 +1,13 @@
 #include <iostream>
 
-#include <GLFW/glfw3.h>
 #include <imgui.h>
-#include <imgui_internal.h>
-#include <glad/glad.h>
+#include "imgui_impl_sdl.h"
+#include "imgui_impl_opengl3.h"
+#include <SDL.h>
 
-#include "../vendor/imgui_impl_glfw.h"
-#include "../vendor/imgui_impl_opengl3.h"
+#include <GL/gl3w.h>
 
-
-#include "../DolphinReader/DolphinReader.h"
+#include "DolphinReader/DolphinReader.h"
 
 #include <iostream>
 #include <fstream>
@@ -32,42 +30,66 @@ void DrawMainView();
 
 StructureFile structures;
 
-int main() {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
-
-    GLFWwindow *window = glfwCreateWindow(1200, 800, "NSMBW Inspector", nullptr, nullptr);
-    if (window == nullptr) {
-        std::cout << "Could not create GLFW window!" << std::endl;
-        glfwTerminate();
+int main(int argc, char **argv) {
+    // Setup SDL
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        printf("SDL Init Error: %s\n", SDL_GetError());
         return -1;
     }
-    glfwMakeContextCurrent(window);
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+    // GL ES 2.0 + GLSL 100
+    const char* glsl_version = "#version 100";
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#elif defined(__APPLE__)
+    // GL 3.2 Core + GLSL 150
+    const char* glsl_version = "#version 150";
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+#else
+    // GL 3.0 + GLSL 130
+    const char* glsl_version = "#version 130";
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#endif
 
-    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    // Create window with graphics context
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow("NSMBW Inspector", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+    SDL_GL_MakeCurrent(window, gl_context);
+    SDL_GL_SetSwapInterval(1); // Enable vsync
+
+    SDL_Renderer *rend = SDL_CreateRenderer(window, -1, 0);
+
+    gl3wInit();
+
+    // TODO: fix this!
     float xscale, yscale;
-    glfwGetMonitorContentScale(monitor, &xscale, &yscale);
-    float highDPIscaleFactor = 1.0;
+    SDL_RenderGetScale(rend, &xscale, &yscale);
+    printf("rendScale = %f, %f\n", xscale, yscale);
+    float highDPIscaleFactor = 2.0;
     if (xscale > 1 || yscale > 1) {
         highDPIscaleFactor = ceil(xscale);
     }
 
-    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
-        std::cout << "Could not initialize GLAD!" << std::endl;
-        return -1;
-    }
-
+    IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
     ImGuiIO &io = ImGui::GetIO();
     io.IniFilename = "imgui.ini";
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
+
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init(GLSL_VERSION);
 
     ImGuiStyle &style = ImGui::GetStyle();
@@ -105,14 +127,19 @@ int main() {
         structuresErrorPopup = true;
     }
 
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-
-        glClearColor(0, 0, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT);
+    bool shouldClose = false;
+    while (!shouldClose) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+            if (event.type == SDL_QUIT)
+                shouldClose = true;
+            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
+                shouldClose = true;
+        }
 
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
         if (structuresErrorPopup) {
@@ -126,7 +153,7 @@ int main() {
             ImGui::TextWrapped(errorText.c_str());
             if (ImGui::Button("OK")) {
                 ImGui::CloseCurrentPopup();
-                glfwSetWindowShouldClose(window, true);
+                shouldClose = true;
                 structuresErrorPopup = false;
             }
             ImGui::EndPopup();
@@ -139,17 +166,20 @@ int main() {
         }
 
         ImGui::Render();
+        glViewport(0, 0, (int) io.DisplaySize.x, (int) io.DisplaySize.y);
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        glfwSwapBuffers(window);
+        SDL_GL_SwapWindow(window);
     }
 
     ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    SDL_GL_DeleteContext(gl_context);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     return 0;
 }
 
