@@ -2,6 +2,3 @@
 	path = DolphinReader/Dolphin-memory-engine
 	url = https://github.com/aldelaro5/Dolphin-memory-engine.git
 	branch = master
-[submodule "lib/glfw"]
-	path = lib/glfw
-	url = https://github.com/glfw/glfw.git
