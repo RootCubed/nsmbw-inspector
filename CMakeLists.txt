@@ -10,4 +10,4 @@ add_subdirectory("libs")
 add_subdirectory("src")
 add_subdirectory("data")
 
-add_dependencies(nsmbw-inspector copyAssets)
+add_dependencies(${PROJECT_NAME} copyAssets)

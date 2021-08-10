@@ -81,12 +81,13 @@ int main(int argc, char **argv) {
 
     gl3wInit();
 
-    float ddpi, hdpi, vdpi;
-    if (SDL_GetDisplayDPI(0, &ddpi, &hdpi, &vdpi) != 0) {
+    float dpi;
+    if (SDL_GetDisplayDPI(0, &dpi, NULL, NULL) != 0) {
         fprintf(stderr, "Failed to obtain DPI information for display 0: %s\n", SDL_GetError());
         return -1;
     }
-    int highDPIscaleFactor = ceil(ddpi / 96.0f);
+    printf("dpi = %f\n", dpi);
+    float highDPIscaleFactor = round(dpi / 96.0f);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
     ImGuiStyle &style = ImGui::GetStyle();
     style.ScaleAllSizes(highDPIscaleFactor);
     style.WindowRounding = 6;
-    
+
     ImFontConfig cfg;
     cfg.SizePixels = 13 * highDPIscaleFactor;
     io.Fonts->AddFontFromFileTTF("iosevka-ss01-regular.ttf", 13 * highDPIscaleFactor, &cfg);
@@ -110,7 +111,7 @@ int main(int argc, char **argv) {
 
     bool structuresErrorPopup = false;
     std::string errorText;
-    
+
     std::string structureFileBuffer;
     try {
         std::ifstream f;
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
         errorText = e.what();
         structuresErrorPopup = true;
     }
-    
+
     try {
         structures = StructureFile(structureFileBuffer);
     } catch (StructureFileException e) {
@@ -156,7 +157,7 @@ int main(int argc, char **argv) {
         ImGui::SetNextWindowSize(ImVec2(500, 0));
 
         if (ImGui::BeginPopupModal("Error loading structures", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::TextWrapped(errorText.c_str());
+            ImGui::TextWrapped("%s", errorText.c_str());
             if (ImGui::Button("OK")) {
                 ImGui::CloseCurrentPopup();
                 shouldClose = true;
@@ -202,7 +203,7 @@ void DrawStartupView() {
             ImGui::GetWindowSize().x / 2 -
             font_size + (font_size / 2)
         );
-        ImGui::Text(s.c_str());
+        ImGui::Text("%s", s.c_str());
         if (ImGui::Button("Hook to Dolphin")) {
             startupWindow_status = DolphinReader::hook();
         }
@@ -273,7 +274,7 @@ void DrawMainView() {
             for (auto el : list) {
                 u32 namePtr = _byteswap_ulong(read(el + 0x6c, u32));
                 readStr(namePtr, nameBuf);
-                char windowNameBuf[64];
+                char windowNameBuf[128];
                 sprintf(windowNameBuf, "%s##%08x", nameBuf, el);
                 if (ImGui::Selectable(windowNameBuf, el == selectedInstance)) {
                     selectedInstance = el;
@@ -296,7 +297,7 @@ void DrawMainView() {
         char name[128];
         u32 namePtr = _byteswap_ulong(read(selectedInstance + 0x6c, u32));
         readStr(namePtr, name);
-        
+
         ImGui::BeginChild("Inspector", ImVec2(0, 0), true);
         {
             if (!selectedInstanceExists) {
