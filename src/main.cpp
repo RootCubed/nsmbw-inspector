@@ -20,6 +20,11 @@
 
 #include "nsmbw/mj2d/f/f_manager.h"
 
+#ifdef WIN32
+#include <Windows.h>
+#include <ShellScalingAPI.h>
+#endif
+
 #define GLSL_VERSION "#version 330"
 
 int status = 0;
@@ -31,9 +36,12 @@ void DrawMainView();
 StructureFile structures;
 
 int main(int argc, char **argv) {
+    #ifdef WIN32
+    SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+    #endif
     // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        printf("SDL Init Error: %s\n", SDL_GetError());
+        fprintf(stderr, "SDL Init Error: %s\n", SDL_GetError());
         return -1;
     }
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -63,7 +71,7 @@ int main(int argc, char **argv) {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     SDL_Window* window = SDL_CreateWindow("NSMBW Inspector", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
@@ -73,14 +81,12 @@ int main(int argc, char **argv) {
 
     gl3wInit();
 
-    // TODO: fix this!
-    float xscale, yscale;
-    SDL_RenderGetScale(rend, &xscale, &yscale);
-    printf("rendScale = %f, %f\n", xscale, yscale);
-    float highDPIscaleFactor = 2.0;
-    if (xscale > 1 || yscale > 1) {
-        highDPIscaleFactor = ceil(xscale);
+    float ddpi, hdpi, vdpi;
+    if (SDL_GetDisplayDPI(0, &ddpi, &hdpi, &vdpi) != 0) {
+        fprintf(stderr, "Failed to obtain DPI information for display 0: %s\n", SDL_GetError());
+        return -1;
     }
+    int highDPIscaleFactor = ceil(ddpi / 96.0f);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
