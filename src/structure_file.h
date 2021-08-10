@@ -22,25 +22,28 @@
     stringJIS
 } ebaseType;*/
 
-typedef union {
-    s32 si32;
-    u32 us32;
-    s16 si16;
-    u16 us16;
-    s8  si8;
-    u8  us8;
-    float floating;
-    char *str;
-    char data[256];
-} baseTypeUnion;
+typedef struct {
+    u32 addr;
+    union {
+        s32 si32;
+        u32 us32;
+        s16 si16;
+        u16 us16;
+        s8  si8;
+        u8  us8;
+        float floating;
+        char *str;
+        char binary[256];
+    } data;
+} baseTypeStruct;
 
 class BasicType {
     public:
-    void (*display)(std::string, baseTypeUnion);
+    void (*display)(std::string, baseTypeStruct);
     int size;
 
     BasicType();
-    BasicType(int, void (*)(std::string, baseTypeUnion));
+    BasicType(int, void (*)(std::string, baseTypeStruct));
 };
 
 class Structure;
@@ -63,6 +66,17 @@ struct Structure {
     std::vector<std::pair<u32, StructField>> fields;
 };
 
+class StructureFile;
+
+struct TempStructure {
+    std::string inherit;
+    size_t localSize;
+    std::string content;
+    int posInVector;
+
+    Structure &stru(std::vector<Structure> &) const;
+};
+
 class StructureInstance {
     std::vector<char> data;
 
@@ -76,19 +90,19 @@ class StructureInstance {
     void updateData(std::vector<char> data);
     int getReadSize();
 
-    void renderInstance();
+    void drawInstance(u32 ptr);
 };
 
 class StructureFile {
     std::vector<Structure> structs;
+
+    void parseStructureBlocks(std::string);
 
     public:
     StructureFile();
     StructureFile(std::string);
 
     Structure *getStruct(std::string);
-
-    std::vector<Structure> getTabs(std::string);
 };
 
 struct StructureFileException : public std::exception {

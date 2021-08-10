@@ -4,6 +4,9 @@ project(nsmbw-inspector)
 set(CMAKE_CXX_STANDARD 20)
 set(LIBRARIES_DIR lib)
 
+find_package(OpenGL REQUIRED)
+
+if (WIN32)
 add_executable(nsmbw-inspector
         vendor/imgui_impl_glfw.h
         vendor/imgui_impl_glfw.cpp
@@ -15,9 +18,19 @@ add_executable(nsmbw-inspector
         DolphinReader/Dolphin-memory-engine/Source/Common/MemoryCommon.cpp
         DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/DolphinAccessor.cpp
         DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/Windows/WindowsDolphinProcess.cpp)
-
-configure_file(iosevka-ss01-regular.ttf ${CMAKE_CURRENT_BINARY_DIR}/Debug COPYONLY)
-configure_file(structures.txt ${CMAKE_CURRENT_BINARY_DIR}/Debug COPYONLY)
+else()
+add_executable(nsmbw-inspector
+        vendor/imgui_impl_glfw.h
+        vendor/imgui_impl_glfw.cpp
+        vendor/imgui_impl_opengl3.h
+        vendor/imgui_impl_opengl3.cpp
+        src/main.cpp
+        src/structure_file.cpp
+        DolphinReader/DolphinReader.cpp
+        DolphinReader/Dolphin-memory-engine/Source/Common/MemoryCommon.cpp
+        DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/DolphinAccessor.cpp
+        DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/Linux/LinuxDolphinProcess.cpp)
+endif()
 
 # glad
 set(GLAD_DIR "${LIBRARIES_DIR}/glad")
@@ -37,6 +50,8 @@ target_link_libraries(${PROJECT_NAME} "glfw" "${GLFW_LIBRARIES}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLFW_DIR}/include")
 target_compile_definitions(${PROJECT_NAME} PRIVATE "GLFW_INCLUDE_NONE")
 
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} "glad")
+
 # imgui
 set(IMGUI_DIR "${LIBRARIES_DIR}/imgui")
 add_library("imgui"
@@ -48,3 +63,7 @@ add_library("imgui"
 target_include_directories("imgui" PRIVATE "${IMGUI_DIR}/include")
 target_include_directories(${PROJECT_NAME} PRIVATE "${IMGUI_DIR}/include")
 target_link_libraries(${PROJECT_NAME} "imgui" "${CMAKE_DL_LIBS}")
+
+
+configure_file(iosevka-ss01-regular.ttf ${CMAKE_CURRENT_BINARY_DIR}/Debug/iosevka-ss01-regular.ttf COPYONLY)
+configure_file(structures.txt ${CMAKE_CURRENT_BINARY_DIR}/Debug/structures.txt COPYONLY)

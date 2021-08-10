@@ -1,4 +1,4 @@
-structure fBase:-:0x64 {
+structure fBase_c:-:0x64 {
     0x0 uniqueInstanceNum:!u32;
     0x4 objectFlags:u32;
     0x8 objectID:u16;
@@ -7,19 +7,25 @@ structure fBase:-:0x64 {
     0x60 vftable:ptr;
 }
 
-structure dBase:fBase:0xc {
-    0x0 firstLinkedNode:ptr;
-    0x4 explanationString:stringJIS;
-    0x8 nameString:string;
+structure dBase_c:fBase_c:0xc {
+    +0x0 firstLinkedNode:ptr;
+    +0x4 explanationString:stringJIS;
+    +0x8 nameString:string;
 }
 
-structure Actor:dBase:0xb5 {
-    0x3c position:!vec3;
-    0x54 deltaPos:vec3;
-    0x6c scale:!vec3;
-    0x90 rotation:!vec3s;
-    0xa8 maxAccelZ:float;
+structure dBaseActor_c:dBase_c:0xb5 {
+    +0x3c position:!vec3;
+    +0x54 deltaPos:vec3;
+    +0x6c scale:!vec3;
+    +0x90 rotation:!vec3s;
+    +0xa8 maxAccelZ:float;
 }
+
+structure dActor_c:dBaseActor_c:0x0 {}
+
+structure daPlBase_c:dActor_c:0x0 {}
+
+structure PLAYER:daPlBase_c:0x0 {}
 
 structure vec3:-:0xc {
     0x0 x:float;
@@ -41,22 +47,22 @@ preview vec3s {
     multi:x:y:z;
 }
 
-display fBase {
+display fBase_c {
     textbox:"Instance Number":uniqueInstanceNum;
     textbox:"Object ID":objectID;
     textbox:"Vftable":vftable;
 }
 
-display dBase {
+display dBase_c {
     textbox:"Object Name":nameString;
     textbox:"Explanation String":explanationString;
 }
 
-display Actor {
+display dActorBase_c {
     textbox:"Position":position;
     textbox:"Rotation (Degrees)":rotation;
     textbox:"Scale":scale;
     textbox:"Maximum Z Acceleration":maxAccelZ;
 }
 
-object PLAYER:Actor;
+object PLAYER:dActorBase_c;

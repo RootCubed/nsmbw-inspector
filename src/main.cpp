@@ -8,6 +8,7 @@
 #include "../vendor/imgui_impl_glfw.h"
 #include "../vendor/imgui_impl_opengl3.h"
 
+
 #include "../DolphinReader/DolphinReader.h"
 
 #include <iostream>
@@ -16,6 +17,7 @@
 #include <string.h>
 #include <vector>
 
+#include "helper.h"
 #include "structure_file.h"
 
 #include "nsmbw/mj2d/f/f_manager.h"
@@ -53,7 +55,6 @@ int main() {
     if (xscale > 1 || yscale > 1) {
         highDPIscaleFactor = ceil(xscale);
     }
-    std::cout << highDPIscaleFactor << std::endl;
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         std::cout << "Could not initialize GLAD!" << std::endl;
@@ -260,13 +261,6 @@ void DrawMainView() {
         u32 namePtr = _byteswap_ulong(read(selectedInstance + 0x6c, u32));
         readStr(namePtr, name);
         
-        int rS = selected.getReadSize();
-        if (rS != -1) {
-            std::vector<char> data(rS, 0);
-            void *tmp = DolphinReader::readValues(selectedInstance, rS);
-            std::memcpy(&data[0], tmp, rS);
-            selected.updateData(data);
-        }
         ImGui::BeginChild("Inspector", ImVec2(0, 0), true);
         {
             if (!selectedInstanceExists) {
@@ -275,9 +269,7 @@ void DrawMainView() {
                 // render instance viewer
                 ImGui::TextWrapped("%s @ 0x%08x", name, readU32(selectedInstance + 0x6c));
                 ImGui::Separator();
-                if (rS != -1) {
-                    selected.renderInstance();
-                }
+                selected.drawInstance(selectedInstance);
             }
         }
         ImGui::EndChild();

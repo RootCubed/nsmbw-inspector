@@ -1,9 +1,13 @@
+#include "../DolphinReader/DolphinReader.h"
 #include "structure_file.h"
 
 #include <unordered_set>
 #include <sstream>
 
-BasicType::BasicType(int s, void (*disp)(std::string, baseTypeUnion)) {
+#include "helper.h"
+
+
+BasicType::BasicType(int s, void (*disp)(std::string, baseTypeStruct)) {
     size = s;
     display = disp;
 }
@@ -13,39 +17,51 @@ BasicType::BasicType() {
     display = NULL;
 }
 
-void basicTypeU32_display(std::string name, baseTypeUnion data) {
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &data.us32);
+void basicTypeU32_display(std::string name, baseTypeStruct d) {
+    u32 val = _byteswap_ulong(d.data.us32);
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &val)) {
+        DolphinReader::writeU32(d.addr, val);
+    }
 }
-void basicTypePtr_display(std::string name, baseTypeUnion data) {
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &data.us32, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
+void basicTypePtr_display(std::string name, baseTypeStruct d) {
+    u32 val = _byteswap_ulong(d.data.us32);
+    ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &val, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
 }
-void basicTypeS32_display(std::string name, baseTypeUnion data) {
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_S32, &data.si32);
+void basicTypeS32_display(std::string name, baseTypeStruct d) {
+    u32 val = _byteswap_ulong(d.data.us32);
+    ImGui::InputScalar(name.c_str(), ImGuiDataType_S32, &val);
 }
-void basicTypeU16_display(std::string name, baseTypeUnion data) {
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_U16, &data.us16);
+void basicTypeU16_display(std::string name, baseTypeStruct d) {
+    u16 val = _byteswap_ushort(d.data.us16);
+    ImGui::InputScalar(name.c_str(), ImGuiDataType_U16, &val);
 }
-void basicTypeS16_display(std::string name, baseTypeUnion data) {
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_S16, &data.si16);
+void basicTypeS16_display(std::string name, baseTypeStruct d) {
+    u16 val = _byteswap_ushort(d.data.us16);
+    ImGui::InputScalar(name.c_str(), ImGuiDataType_S16, &val);
 }
-void basicTypeS16Ang_display(std::string name, baseTypeUnion data) {
-    float num = data.si16 / 0xFFFF * 360;
+void basicTypeS16Ang_display(std::string name, baseTypeStruct d) {
+    u16 val = _byteswap_ushort(d.data.us16);
+    float num = d.data.si16 / 0xFFFF * 360;
     ImGui::InputScalar(name.c_str(), ImGuiDataType_S16, &num, NULL, NULL, "%f°");
 }
-void basicTypeU8_display(std::string name, baseTypeUnion data) {
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_U8, &data.us8);
+void basicTypeU8_display(std::string name, baseTypeStruct d) {
+    u8 val = d.data.us8;
+    ImGui::InputScalar(name.c_str(), ImGuiDataType_U8, &val);
 }
-void basicTypeS8_display(std::string name, baseTypeUnion data) {
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_S8, &data.si8);
+void basicTypeS8_display(std::string name, baseTypeStruct d) {
+    s8 val = d.data.si8;
+    ImGui::InputScalar(name.c_str(), ImGuiDataType_S8, &val);
 }
-void basicTypeFloat_display(std::string name, baseTypeUnion data) {
-    ImGui::InputFloat(name.c_str(), &data.floating);
+void basicTypeFloat_display(std::string name, baseTypeStruct d) {
+    u32 tmp = _byteswap_ulong(d.data.us32);
+    float val = *(float *) &tmp;
+    ImGui::InputFloat(name.c_str(), &val);
 }
 char tmp[] = "WIP";
-void basicTypeStr_display(std::string name, baseTypeUnion data) {
+void basicTypeStr_display(std::string name, baseTypeStruct d) {
     ImGui::InputText(name.c_str(), tmp, 3);
 }
-void basicTypeJIS_display(std::string name, baseTypeUnion data) {
+void basicTypeJIS_display(std::string name, baseTypeStruct d) {
     ImGui::InputText(name.c_str(), tmp, 3);
 }
 BasicType basicTypeU32    (4, basicTypeU32_display);
@@ -74,6 +90,10 @@ std::map<std::string, BasicType> basicTypes = {
     {std::string("stringJIS"), basicTypeJIS}
 };
 
+Structure &TempStructure::stru(std::vector<Structure> &vec) const {
+    return vec.at(posInVector);
+}
+
 StructureInstance::StructureInstance() {
     type = NULL;
     data = std::vector<char>(0);
@@ -97,17 +117,40 @@ void StructureInstance::updateData(std::vector<char> _data) {
 
 int StructureInstance::getReadSize() {
     if (type == NULL) return -1;
-    return type->size;
+    Structure *curr = type;
+    int size = 0;
+    do {
+        size += curr->size;
+    } while (curr = curr->inherits);
+    return size;
 }
 
-void StructureInstance::renderInstance() {
-    for (auto &field : type->fields) {
-        if (field.second.isBasic) {
-            baseTypeUnion thisData;
-            std::memcpy(thisData.data, &data[0], field.second.ptr.base->size);
-            field.second.ptr.base->display(field.second.name, thisData);
-        }
+void StructureInstance::drawInstance(u32 ptr) {
+    int rS = getReadSize();
+    if (rS > 0) {
+        std::vector<char> data(rS, 0);
+        void *tmp = DolphinReader::readValues(ptr, rS);
+        std::memcpy(&data[0], tmp, rS);
+        updateData(data);
+    } else {
+        printf("data read error: readSize <= 0\n");
     }
+    Structure *curr = type;
+    ImGui::BeginTabBar("Structs");
+    do {
+        if (ImGui::BeginTabItem(curr->name.c_str())) {
+            for (auto &field : curr->fields) {
+                if (field.second.isBasic) {
+                    baseTypeStruct thisData;
+                    thisData.addr = ptr + field.first;
+                    std::memcpy(thisData.data.binary, &data[0] + field.first, field.second.ptr.base->size);
+                    field.second.ptr.base->display(field.second.name, thisData);
+                }
+            }
+            ImGui::EndTabItem();
+        }
+    } while (curr = curr->inherits);
+    ImGui::EndTabBar();
 }
 
 StructureFile::StructureFile() {
@@ -129,71 +172,99 @@ StructureFile::StructureFile(std::string fileWithLineBreaks) {
 
     std::string file = std::regex_replace(fileWithLineBreaks, whitespace, "");
 
-    std::regex structureBlock("structure ([^:]+):([^:]+):([^\\{ ]+) *\\{([^\\}]+)\\}", std::regex::ECMAScript);
-    std::smatch structureBlocks;
+    parseStructureBlocks(file);
+
+    // todo: preview, display, object
+}
+
+void StructureFile::parseStructureBlocks(std::string file) {
+    std::regex structureBlockRegex("structure ([^:]+):([^:]+):([^\\{ ]+) *\\{([^\\}]*)\\}", std::regex::ECMAScript);
+    std::smatch structureBlock;
     
-    std::map<std::string, std::tuple<size_t, std::string, std::string>> tmpStructures;
+    std::map<std::string, TempStructure> tmpStructures;
 
     std::string::const_iterator structureBlocksStart(file.cbegin());    
-    while (std::regex_search(structureBlocksStart, file.cend(), structureBlocks, structureBlock)) {
-        std::string name = structureBlocks[1].str().c_str();
-        std::string inherits = structureBlocks[2].str().c_str();
-        std::string size = structureBlocks[3].str().c_str();
-        std::string content = structureBlocks[4].str().c_str();
-        Structure s;
+    while (std::regex_search(structureBlocksStart, file.cend(), structureBlock, structureBlockRegex)) {
+        std::string name = structureBlock[1].str();
+        std::string inherit = structureBlock[2].str();
+        std::string size = structureBlock[3].str();
+        std::string content = structureBlock[4].str();
+        
+        Structure s = Structure();
         s.name = name;
-        s.size = decHexToInt(size);
-        s.inherits = NULL;
+        s.size = -1; // will be changed later to the full size including inherited classes
+        structs.push_back(s);
+
+        TempStructure tempS;
+        tempS.posInVector = structs.size() - 1;
+        tempS.localSize = decHexToInt(size);
+        tempS.content = content;
+        tempS.inherit = inherit;
+
         if (tmpStructures.contains(name)) {
             std::ostringstream msg;
             msg << "Duplicate structure name \"" << name << "\"";
             throw StructureFileException(msg.str());
         }
-        structs.push_back(s);
-        tmpStructures[name] = std::tuple<size_t, std::string, std::string>(structs.size() - 1, inherits, content);
-        structureBlocksStart = structureBlocks.suffix().first;
+        tmpStructures[name] = tempS;
+
+        structureBlocksStart = structureBlock.suffix().first;
     }
 
     // test for self-inheriting structs
-    for (auto const& stru : tmpStructures) {
+    for (auto &stru : tmpStructures) {
         std::unordered_set<std::string> visited;
-        std::string currInh = stru.first;
-        std::string nextInh = std::get<1>(stru.second);
-        while (nextInh != "-") {
-            if (!tmpStructures.contains(nextInh)) {
+        TempStructure *currInh = &stru.second;
+        TempStructure *nextInh = NULL;
+        while (currInh->inherit != "-") {
+            if (!tmpStructures.contains(currInh->inherit)) {
                 std::ostringstream msg;
-                msg << "Structure " << stru.first << " inherits from " << nextInh << ", which couldn't be found";
+                msg << "Structure " << stru.first << " inherits from " << nextInh->inherit << ", which couldn't be found";
                 throw StructureFileException(msg.str());
             }
-            int idxOld = std::get<0>(tmpStructures[currInh]);
-            if (structs[idxOld].inherits != NULL) break; // already has inheritance info
-            if (visited.contains(nextInh)) {
+            nextInh = &tmpStructures[currInh->inherit];
+            if (nextInh->stru(structs).inherits != NULL) break; // already has inheritance info
+            if (visited.contains(nextInh->stru(structs).name)) {
                 std::ostringstream msg;
                 msg << "Structure " << stru.first << " is self-referential!";
                 throw StructureFileException(msg.str());
             }
-            visited.insert(currInh);
-            int idxNew = std::get<0>(tmpStructures[nextInh]);
-            structs[idxOld].inherits = &structs[idxNew];
+            visited.insert(currInh->stru(structs).name);
+            currInh->stru(structs).inherits = &nextInh->stru(structs);
             currInh = nextInh;
-            nextInh = std::get<1>(tmpStructures[currInh]);
         }
     }
 
-    // finally parse the fields and add the structure definition to the vector
+    // set structure sizes
+    for (auto &stru : tmpStructures) {
+        std::vector<TempStructure *> path(0);
+        auto tmp = &stru.second;
+        path.push_back(tmp);
+        while (tmp->inherit != "-" && tmp->stru(structs).size == -1) {
+            tmp = &tmpStructures[tmp->inherit];
+            path.push_back(tmp);
+        }
+        int size = 0;
+        while (path.size() > 0) {
+            size += path[path.size() - 1]->localSize;
+            path[path.size() - 1]->stru(structs).size = size;
+            path.pop_back();
+        }
+    }
+
+    // finally parse the fields
     for (auto const& stru : tmpStructures) {
         std::regex fieldBlock("([^ ]+) ([^:]+):([^;]+);", std::regex::ECMAScript);
         std::smatch fieldBlocks;
 
-        Structure *s = &structs[std::get<0>(stru.second)];
-        auto content = std::get<2>(stru.second);
+        Structure &s = stru.second.stru(structs);
+        auto content = stru.second.content;
 
         std::string::const_iterator fieldBlockStart(content.cbegin());    
         while (std::regex_search(fieldBlockStart, content.cend(), fieldBlocks, fieldBlock)) {
             std::string offset = fieldBlocks[1].str().c_str();
             std::string name = fieldBlocks[2].str().c_str();
             std::string typeName = fieldBlocks[3].str().c_str();
-            u32 offset_int = decHexToInt(offset);
 
             StructField field;
             field.modifyable = true;
@@ -204,22 +275,26 @@ StructureFile::StructureFile(std::string fileWithLineBreaks) {
             }
             if (tmpStructures.contains(typeName)) {
                 field.isBasic = false;
-                field.ptr.structure = &structs[std::get<0>(tmpStructures[typeName])];
+                field.ptr.structure = &tmpStructures[typeName].stru(structs);
             } else if (basicTypes.contains(typeName)) {
                 field.isBasic = true;
                 field.ptr.base = &basicTypes[typeName];
             } else {
                 std::ostringstream msg;
-                msg << "Structure " << stru.first << " contains type " << typeName << " which couldn't be found.";
+                msg << "Structure " << stru.first << " contains type " << typeName << ", which couldn't be found.";
                 throw StructureFileException(msg.str());
             }
-            s->fields.push_back(std::pair<u32, StructField>(offset_int, field));
+
+            int useBaseOffset = 0;
+            if (offset[0] == '+') {
+                if (s.inherits != NULL) useBaseOffset = s.inherits->size;
+            }
+            u32 offset_int = decHexToInt(offset) + useBaseOffset;
+            s.fields.push_back(std::pair<u32, StructField>(offset_int, field));
 
             fieldBlockStart = fieldBlocks.suffix().first;
         }
     }
-
-    // todo: preview, display, object
 }
 
 Structure *StructureFile::getStruct(std::string find) {
