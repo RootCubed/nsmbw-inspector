@@ -1,5 +1,5 @@
 [submodule "DolphinReader/Dolphin-memory-engine"]
-	path = DolphinReader/Dolphin-memory-engine
+	path = src/DolphinReader/Dolphin-memory-engine
 	url = https://github.com/aldelaro5/Dolphin-memory-engine.git
 	branch = master
 [submodule "libs/SDL"]
