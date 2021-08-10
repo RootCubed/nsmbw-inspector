@@ -21,4 +21,4 @@ endif()
 
 target_sources(nsmbw-inspector PUBLIC ${NSMBWINSPECTOR_SRC})
 
-target_link_libraries(nsmbw-inspector IMGUI SDL2 SDL2main)
+target_link_libraries(nsmbw-inspector IMGUI)
