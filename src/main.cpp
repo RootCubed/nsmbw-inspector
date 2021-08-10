@@ -11,6 +11,7 @@
 #include "../DolphinReader/DolphinReader.h"
 
 #include <iostream>
+#include <fstream>
 #include <math.h>
 #include <string.h>
 #include <vector>
@@ -26,6 +27,8 @@ int status = 0;
 void DrawStartupView();
 void InitMainView();
 void DrawMainView();
+
+StructureFile structures;
 
 int main() {
     glfwInit();
@@ -76,6 +79,31 @@ int main() {
     io.Fonts->Build();
     cfg.GlyphOffset.y = highDPIscaleFactor;
 
+    bool structuresErrorPopup = false;
+    std::string errorText;
+    
+    std::string structureFileBuffer;
+    try {
+        std::ifstream f;
+        f.open("structures.txt");
+        std::string line;
+        while (std::getline(f, line)) {
+            structureFileBuffer.append(line);
+            structureFileBuffer.append("\n");
+        }
+        f.close();
+    } catch (std::exception e) {
+        errorText = e.what();
+        structuresErrorPopup = true;
+    }
+    
+    try {
+        structures = StructureFile(structureFileBuffer);
+    } catch (StructureFileException e) {
+        errorText = e.what();
+        structuresErrorPopup = true;
+    }
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
@@ -86,11 +114,25 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        if (structuresErrorPopup) {
+            ImGui::OpenPopup("Error loading structures");
+        }
+
+        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), 0, ImVec2(0.5, 0.5));
+        ImGui::SetNextWindowSize(ImVec2(500, 0));
+
+        if (ImGui::BeginPopupModal("Error loading structures", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::TextWrapped(errorText.c_str());
+            if (ImGui::Button("OK")) {
+                ImGui::CloseCurrentPopup();
+                glfwSetWindowShouldClose(window, true);
+                structuresErrorPopup = false;
+            }
+            ImGui::EndPopup();
+        }
+
         if (status == 0) {
             DrawStartupView();
-        } else if (status == 1) {
-            InitMainView();
-            status = 2;
         } else {
             DrawMainView();
         }
@@ -146,27 +188,6 @@ void DrawStartupView() {
     ImGui::End();
 }
 
-void InitMainView() {
-    /*ImGui::Begin("List", 0);
-    ImGui::End();
-    ImGui::Begin("Info###InstanceProperties", 0);
-    ImGui::End();*/
-
-    /*ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
-    ImGuiContext* ctx = ImGui::GetCurrentContext();
-    ImGui::DockBuilderRemoveNode(dockspace_id); // Clear out existing layout
-    ImGui::DockBuilderAddNode(dockspace_id); // Add empty node
-    ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
-
-    ImGuiID dock_main_id = dockspace_id; // This variable will track the document node, however we are not using it here as we aren't docking anything into it.
-    ImGuiID dock_id_right;
-    ImGuiID dock_id_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.30f, NULL, &dock_id_right);
-
-    ImGui::DockBuilderDockWindow("Info###InstanceProperties", dock_id_left);
-    ImGui::DockBuilderDockWindow("List", dock_id_right);
-    ImGui::DockBuilderFinish(dockspace_id);*/
-}
-
 void gen_random(char *s, int l) {
     for (int c; c=rand()%62, *s++ = (c+"07="[(c+16)/26]), l-->1;);
 }
@@ -197,6 +218,8 @@ std::vector<u32> readList(u32 address) {
 u32 selectedInstance = 0x0;
 bool selectedInstanceExists = false;
 
+StructureInstance selected;
+
 void DrawMainView() {
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -213,10 +236,15 @@ void DrawMainView() {
             for (auto el : list) {
                 u32 namePtr = _byteswap_ulong(read(el + 0x6c, u32));
                 readStr(namePtr, nameBuf);
-                sprintf(nameBuf, "%s##%08x", nameBuf, el);
-                if (ImGui::Selectable(nameBuf, el == selectedInstance)) {
+                char windowNameBuf[64];
+                sprintf(windowNameBuf, "%s##%08x", nameBuf, el);
+                if (ImGui::Selectable(windowNameBuf, el == selectedInstance)) {
                     selectedInstance = el;
                     selectedInstanceExists = true;
+                    auto s = structures.getStruct(nameBuf);
+                    if (s != NULL) {
+                        selected.setType(s);
+                    }
                 }
                 foundSelectedInstance |= el == selectedInstance;
             }
@@ -231,6 +259,14 @@ void DrawMainView() {
         char name[128];
         u32 namePtr = _byteswap_ulong(read(selectedInstance + 0x6c, u32));
         readStr(namePtr, name);
+        
+        int rS = selected.getReadSize();
+        if (rS != -1) {
+            std::vector<char> data(rS, 0);
+            void *tmp = DolphinReader::readValues(selectedInstance, rS);
+            std::memcpy(&data[0], tmp, rS);
+            selected.updateData(data);
+        }
         ImGui::BeginChild("Inspector", ImVec2(0, 0), true);
         {
             if (!selectedInstanceExists) {
@@ -239,6 +275,9 @@ void DrawMainView() {
                 // render instance viewer
                 ImGui::TextWrapped("%s @ 0x%08x", name, readU32(selectedInstance + 0x6c));
                 ImGui::Separator();
+                if (rS != -1) {
+                    selected.renderInstance();
+                }
             }
         }
         ImGui::EndChild();

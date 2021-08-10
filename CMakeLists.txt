@@ -10,12 +10,14 @@ add_executable(nsmbw-inspector
         vendor/imgui_impl_opengl3.h
         vendor/imgui_impl_opengl3.cpp
         src/main.cpp
+        src/structure_file.cpp
         DolphinReader/DolphinReader.cpp
         DolphinReader/Dolphin-memory-engine/Source/Common/MemoryCommon.cpp
         DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/DolphinAccessor.cpp
         DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/Windows/WindowsDolphinProcess.cpp)
 
 configure_file(iosevka-ss01-regular.ttf ${CMAKE_CURRENT_BINARY_DIR}/Debug COPYONLY)
+configure_file(structures.txt ${CMAKE_CURRENT_BINARY_DIR}/Debug COPYONLY)
 
 # glad
 set(GLAD_DIR "${LIBRARIES_DIR}/glad")
