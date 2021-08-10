@@ -1,2 +1,3 @@
-configure_file(iosevka-ss01-regular.ttf ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/iosevka-ss01-regular.ttf COPYONLY)
-configure_file(structures.txt ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/structures.txt COPYONLY)
+add_custom_target(copyAssets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/ ${CMAKE_BINARY_DIR}/bin/Debug
+)
