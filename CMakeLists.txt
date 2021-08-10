@@ -3,7 +3,7 @@ project(nsmbw-inspector)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 add_subdirectory("libs")
 add_subdirectory("src")
