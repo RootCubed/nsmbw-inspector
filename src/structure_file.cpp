@@ -57,12 +57,20 @@ void basicTypeFloat_display(std::string name, baseTypeStruct d) {
     float val = *(float *) &tmp;
     ImGui::InputFloat(name.c_str(), &val);
 }
-char tmp[] = "WIP";
 void basicTypeStr_display(std::string name, baseTypeStruct d) {
-    ImGui::InputText(name.c_str(), tmp, 3);
+    char strBuf[256];
+    u32 tmpAddr = _byteswap_ulong(d.data.us32);
+    void *tmp = DolphinReader::readValues(tmpAddr, 256);
+    memcpy(strBuf, tmp, 256);
+    ImGui::InputText(name.c_str(), strBuf, 256);
 }
+// TODO: actually convert JIS to UTF8
 void basicTypeJIS_display(std::string name, baseTypeStruct d) {
-    ImGui::InputText(name.c_str(), tmp, 3);
+    char strBuf[256];
+    u32 tmpAddr = _byteswap_ulong(d.data.us32);
+    void *tmp = DolphinReader::readValues(tmpAddr, 256);
+    memcpy(strBuf, tmp, 256);
+    ImGui::InputText(name.c_str(), strBuf, 256);
 }
 BasicType basicTypeU32    (4, basicTypeU32_display);
 BasicType basicTypePtr    (4, basicTypePtr_display);
@@ -134,6 +142,7 @@ void StructureInstance::drawInstance(u32 ptr) {
         updateData(data);
     } else {
         printf("data read error: readSize <= 0\n");
+        return;
     }
     Structure *curr = type;
     ImGui::BeginTabBar("Structs");
@@ -240,14 +249,19 @@ void StructureFile::parseStructureBlocks(std::string file) {
         std::vector<TempStructure *> path(0);
         auto tmp = &stru.second;
         path.push_back(tmp);
-        while (tmp->inherit != "-" && tmp->stru(structs).size == -1) {
+        while (tmp->inherit != "-" && tmpStructures[tmp->inherit].stru(structs).size == -1) {
             tmp = &tmpStructures[tmp->inherit];
             path.push_back(tmp);
         }
         int size = 0;
         while (path.size() > 0) {
-            size += path[path.size() - 1]->localSize;
-            path[path.size() - 1]->stru(structs).size = size;
+            TempStructure *el = path[path.size() - 1];
+            if (el->stru(structs).size > -1) {
+                size += el->stru(structs).size;
+            } else {
+                size += el->localSize;
+            }
+            el->stru(structs).size = size;
             path.pop_back();
         }
     }
@@ -288,6 +302,7 @@ void StructureFile::parseStructureBlocks(std::string file) {
             int useBaseOffset = 0;
             if (offset[0] == '+') {
                 if (s.inherits != NULL) useBaseOffset = s.inherits->size;
+                offset.erase(0, 1);
             }
             u32 offset_int = decHexToInt(offset) + useBaseOffset;
             s.fields.push_back(std::pair<u32, StructField>(offset_int, field));

@@ -62,7 +62,7 @@ typedef struct {
 struct Structure {
     std::string name;
     Structure *inherits;
-    size_t size;
+    int size;
     std::vector<std::pair<u32, StructField>> fields;
 };
 

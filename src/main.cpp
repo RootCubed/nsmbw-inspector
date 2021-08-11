@@ -255,6 +255,7 @@ std::vector<u32> readList(u32 address) {
 
 u32 selectedInstance = 0x0;
 bool selectedInstanceExists = false;
+bool selectedInstanceValidType = false;
 
 StructureInstance selected;
 
@@ -280,7 +281,8 @@ void DrawMainView() {
                     selectedInstance = el;
                     selectedInstanceExists = true;
                     auto s = structures.getStruct(nameBuf);
-                    if (s != NULL) {
+                    selectedInstanceValidType = (s != NULL);
+                    if (selectedInstanceValidType) {
                         selected.setType(s);
                     }
                 }
@@ -302,6 +304,8 @@ void DrawMainView() {
         {
             if (!selectedInstanceExists) {
                 ImGui::TextWrapped("Select an instance to view its properties.");
+            } else if (!selectedInstanceValidType) {
+                ImGui::TextWrapped("Actor %s is not defined in structures.txt yet.", name);
             } else {
                 // render instance viewer
                 ImGui::TextWrapped("%s @ 0x%08x", name, readU32(selectedInstance + 0x6c));
