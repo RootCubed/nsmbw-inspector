@@ -1,35 +1,27 @@
 # NSMBW Inspector
+
 ## About
 NSMBW (New Super Mario Bros Wii.) Inspector is a tool that hooks into the game running on Dolphin and lists the currently loaded class instances. You can then view the data of an instance by clicking on it and manipulate fields defined in a structure file. This project is currently still very much a WIP and only very few classes are defined, but the hope is to add as many of them as possible.
 
-NSMBW Inspector is built with electron and native modules compiled from [aldelaro5's Dolphin memory engine](https://github.com/aldelaro5/Dolphin-memory-engine). I might try moving to a different framework for the GUI at some point since electron generates ridiculously large binaries.
+NSMBW Inspector is a C++ application, using parts of [aldelaro5's Dolphin memory engine](https://github.com/aldelaro5/Dolphin-memory-engine) for Dolphin accessor functions. I began this project as an electron app with C++ native bindings, but I very much disliked the huge overhead such a project causes, which is why I moved to using SDL + [Dear ImGui](https://github.com/ocornut/imgui).
 ## Compatibility
-The tool currently only supports Windows. Linux support is in consideration. For MacOS compatibility, the [Dolphin memory engine](https://github.com/aldelaro5/Dolphin-memory-engine) would have to receive MacOS support first.
+The tool currently supports Windows and Linux. For MacOS compatibility, the [Dolphin memory engine](https://github.com/aldelaro5/Dolphin-memory-engine) would have to receive MacOS support first, but no MacOS compatibility is expected for the near future.
 ## Installation
 You can download the latest executable from the [releases](https://github.com/LetsPlentendo-CH/nsmbw-inspector/releases).
 ### Note for Linux users
-If you're on Linux, you will have to run the following commands in the directory of the executable after you've downloaded it:
+If you're on Linux, you will probably have to run the following command in the directory of the executable after you've downloaded it:
 ```shell
-sudo setcap cap_sys_ptrace=eip nsmbwinspector
-sudo chown root:root chrome-sandbox
-sudo chmod 4755 chrome-sandbox
+sudo setcap cap_sys_ptrace=eip nsmbw-inspector
 ```
 ## Running from source
-1. Clone the repository: `git clone --recursive https://github.com/LetsPlentendo-CH/nsmbw-inspector.git`
+1. Clone the repository: `git clone --recursive https://github.com/RootCubed/nsmbw-inspector.git`
 2. Navigate inside the project
-3. Run `npm install`
-4. To launch the app, run `npm start`
-
-If you want to build an executable, run these additional steps (This might be required if you're on Linux):
-
-5. deploy using `npm run make`
-6. copy `structures.txt` from the root folder to `out/nsmbwinspector-win32-x64` (or `out/nsmbwinspector-linux-x64`, if you're on Linux)
-7. (Linux only) Install `patchelf` and, in `out/nsmbwinspector-linux-x64`, run the following commands:
+3. Create a `build` directory and enter it
+4. Configure cmake: `cmake ..`
+5. Build: `cmake --build .`
+7. (Linux only) Run the following command in `build/bin` to add ptracing permissions:
 ```shell
-sudo setcap cap_sys_ptrace=eip nsmbwinspector
-sudo chown root:root chrome-sandbox
-sudo chmod 4755 chrome-sandbox
-patchelf --set-rpath ./ nsmbwinspector # the first command removes some enviroment variables, we add RPATH back
+sudo setcap cap_sys_ptrace=eip nsmbw-inspector
 ```
 
 ## Structure files
