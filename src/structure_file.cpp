@@ -4,8 +4,17 @@
 #include <unordered_set>
 #include <sstream>
 
-#include "helper.h"
+#ifdef WIN32
+    #include <Windows.h>
+#else
+#endif
 
+int decHexToInt(std::string str) {
+    if (str.rfind("0x", 0) == 0) {
+        return std::stoi(str, 0, 16);
+    }
+    return std::stoi(str, 0, 10);
+}
 
 BasicType::BasicType(int s, void (*disp)(std::string, baseTypeStruct)) {
     size = s;
@@ -25,37 +34,54 @@ void basicTypeU32_display(std::string name, baseTypeStruct d) {
 }
 void basicTypePtr_display(std::string name, baseTypeStruct d) {
     u32 val = _byteswap_ulong(d.data.us32);
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &val, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &val, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal)) {
+        DolphinReader::writeU32(d.addr, val);
+    }
 }
 void basicTypeS32_display(std::string name, baseTypeStruct d) {
-    u32 val = _byteswap_ulong(d.data.us32);
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_S32, &val);
+    s32 val = _byteswap_ulong(d.data.si32);
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_S32, &val)) {
+        DolphinReader::writeU32(d.addr, val);
+    }
 }
 void basicTypeU16_display(std::string name, baseTypeStruct d) {
     u16 val = _byteswap_ushort(d.data.us16);
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_U16, &val);
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U16, &val)) {
+        DolphinReader::writeU16(d.addr, val);
+    }
 }
 void basicTypeS16_display(std::string name, baseTypeStruct d) {
-    u16 val = _byteswap_ushort(d.data.us16);
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_S16, &val);
+    s16 val = _byteswap_ushort(d.data.si16);
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U16, &val)) {
+        DolphinReader::writeU16(d.addr, val);
+    }
 }
 void basicTypeS16Ang_display(std::string name, baseTypeStruct d) {
-    u16 val = _byteswap_ushort(d.data.us16);
-    float num = d.data.si16 / 0xFFFF * 360;
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_S16, &num, NULL, NULL, "%f°");
+    s16 val = _byteswap_ushort(d.data.si16);
+    float num = val / 0xFFFF * 360;
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_Float, &num, 0, 0, "%.2fdeg")) {
+        s16 newVal = round(num / 360.0f * 0xFFFF);
+        DolphinReader::writeU16(d.addr, newVal);
+    }
 }
 void basicTypeU8_display(std::string name, baseTypeStruct d) {
     u8 val = d.data.us8;
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_U8, &val);
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U8, &val)) {
+        DolphinReader::writeU8(d.addr, val);
+    }
 }
 void basicTypeS8_display(std::string name, baseTypeStruct d) {
     s8 val = d.data.si8;
-    ImGui::InputScalar(name.c_str(), ImGuiDataType_S8, &val);
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_S8, &val)) {
+        DolphinReader::writeU8(d.addr, val);
+    }
 }
 void basicTypeFloat_display(std::string name, baseTypeStruct d) {
     u32 tmp = _byteswap_ulong(d.data.us32);
     float val = *(float *) &tmp;
-    ImGui::InputFloat(name.c_str(), &val);
+    if (ImGui::InputFloat(name.c_str(), &val)) {
+        DolphinReader::writeFloat(d.addr, val);
+    }
 }
 void basicTypeStr_display(std::string name, baseTypeStruct d) {
     char strBuf[256];
@@ -63,13 +89,14 @@ void basicTypeStr_display(std::string name, baseTypeStruct d) {
     void *tmp = DolphinReader::readValues(tmpAddr, 256);
     memcpy(strBuf, tmp, 256);
     ImGui::InputText(name.c_str(), strBuf, 256);
+    // TODO: implement writing (-> create new buffer or modify actual buffer?)
 }
-// TODO: actually convert JIS to UTF8
+
 void basicTypeJIS_display(std::string name, baseTypeStruct d) {
     char strBuf[256];
     u32 tmpAddr = _byteswap_ulong(d.data.us32);
-    void *tmp = DolphinReader::readValues(tmpAddr, 256);
-    memcpy(strBuf, tmp, 256);
+    char *tmp = (char *) DolphinReader::readValues(tmpAddr, 256);
+    strcpy(strBuf, "ShiftJIS strings not supported");
     ImGui::InputText(name.c_str(), strBuf, 256);
 }
 BasicType basicTypeU32    (4, basicTypeU32_display);
@@ -107,9 +134,8 @@ StructureInstance::StructureInstance() {
     data = std::vector<char>(0);
 }
 
-StructureInstance::StructureInstance(Structure *_type, std::vector<char> _data) {
+StructureInstance::StructureInstance(Structure *_type) {
     setType(_type);
-    updateData(_data);
 }
 
 void StructureInstance::setType(Structure *_type) {
@@ -117,20 +143,16 @@ void StructureInstance::setType(Structure *_type) {
 }
 
 void StructureInstance::updateData(std::vector<char> _data) {
-    if (_data.size() < type->size) {
-        std::cout << "big oof.";
+    if (_data.size() != type->size) {
+        // something went wrong
+        return;
     }
     data = _data;
 }
 
 int StructureInstance::getReadSize() {
     if (type == NULL) return -1;
-    Structure *curr = type;
-    int size = 0;
-    do {
-        size += curr->size;
-    } while (curr = curr->inherits);
-    return size;
+    return type->size;
 }
 
 void StructureInstance::drawInstance(u32 ptr) {
@@ -145,32 +167,38 @@ void StructureInstance::drawInstance(u32 ptr) {
         return;
     }
     Structure *curr = type;
-    ImGui::BeginTabBar("Structs");
+
+    bool noInherit = curr->inherits == NULL;
+    if (!noInherit) ImGui::BeginTabBar("Structs");
     do {
-        if (ImGui::BeginTabItem(curr->name.c_str())) {
+        bool shouldDraw = true;
+        if (!noInherit) shouldDraw = ImGui::BeginTabItem(curr->name.c_str());
+        if (shouldDraw) {
             for (auto &field : curr->fields) {
-                if (field.second.isBasic) {
+                if (field.isBasic) {
                     baseTypeStruct thisData;
-                    thisData.addr = ptr + field.first;
-                    std::memcpy(thisData.data.binary, &data[0] + field.first, field.second.ptr.base->size);
-                    field.second.ptr.base->display(field.second.name, thisData);
+                    thisData.addr = ptr + field.offset;
+                    std::memcpy(thisData.data.binary, &data[0] + field.offset, field.ptr.base->size);
+                    field.ptr.base->display(field.name, thisData);
+                } else {
+                    // build preview
+                    std::ostringstream treeNodeStr;
+                    treeNodeStr << field.name << " [" << field.ptr.structure->name << "]";
+                    if (ImGui::TreeNode(treeNodeStr.str().c_str())) {
+                        StructureInstance selected(field.ptr.structure);
+                        selected.drawInstance(ptr + field.offset);
+                        ImGui::TreePop();
+                    }
                 }
             }
-            ImGui::EndTabItem();
+            if (!noInherit) ImGui::EndTabItem();
         }
     } while (curr = curr->inherits);
-    ImGui::EndTabBar();
+    if (!noInherit) ImGui::EndTabBar();
 }
 
 StructureFile::StructureFile() {
     structs = std::vector<Structure>(0);
-}
-
-int decHexToInt(std::string str) {
-    if (str.rfind("0x", 0) == 0) {
-        return std::stoi(str, 0, 16);
-    }
-    return std::stoi(str, 0, 10);
 }
 
 StructureFile::StructureFile(std::string fileWithLineBreaks) {
@@ -305,7 +333,8 @@ void StructureFile::parseStructureBlocks(std::string file) {
                 offset.erase(0, 1);
             }
             u32 offset_int = decHexToInt(offset) + useBaseOffset;
-            s.fields.push_back(std::pair<u32, StructField>(offset_int, field));
+            field.offset = offset_int;
+            s.fields.push_back(field);
 
             fieldBlockStart = fieldBlocks.suffix().first;
         }

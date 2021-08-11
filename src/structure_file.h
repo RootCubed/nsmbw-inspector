@@ -6,6 +6,8 @@
 #include <utility>
 #include <map>
 
+#include "helper.h"
+
 #include <imgui.h>
 
 /*typedef enum {
@@ -52,6 +54,7 @@ typedef struct {
     bool isBasic;
     bool modifyable;
     std::string name;
+    u32 offset;
 
     union {
         BasicType *base;
@@ -59,11 +62,16 @@ typedef struct {
     } ptr;
 } StructField;
 
+struct Previewer {
+    std::vector<StructField *> fields;
+    std::vector<std::string> str;
+};
+
 struct Structure {
     std::string name;
     Structure *inherits;
     int size;
-    std::vector<std::pair<u32, StructField>> fields;
+    std::vector<StructField> fields;
 };
 
 class StructureFile;
@@ -84,9 +92,9 @@ class StructureInstance {
 
     public:
     StructureInstance();
-    StructureInstance(Structure *datatype, std::vector<char> data);
+    StructureInstance(Structure *);
 
-    void setType(Structure *datatype);
+    void setType(Structure *);
     void updateData(std::vector<char> data);
     int getReadSize();
 

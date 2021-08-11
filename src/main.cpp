@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Failed to obtain DPI information for display 0: %s\n", SDL_GetError());
         return -1;
     }
-    printf("dpi = %f\n", dpi);
     float highDPIscaleFactor = round(dpi / 96.0f);
 
     IMGUI_CHECKVERSION();
@@ -105,7 +104,7 @@ int main(int argc, char **argv) {
 
     ImFontConfig cfg;
     cfg.SizePixels = 13 * highDPIscaleFactor;
-    io.Fonts->AddFontFromFileTTF("iosevka-ss01-regular.ttf", 13 * highDPIscaleFactor, &cfg);
+    io.Fonts->AddFontFromFileTTF("iosevka-ss01-regular.ttf", 13 * highDPIscaleFactor, &cfg, io.Fonts->GetGlyphRangesJapanese());
     io.Fonts->Build();
     cfg.GlyphOffset.y = highDPIscaleFactor;
 

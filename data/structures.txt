@@ -33,9 +33,7 @@ structure vec3:-:0xc {
     0x8 z:float;
 }
 
-preview vec3 {
-    multi:x:y:z;
-}
+preview vec3 "$x$, $y$, $z$";
 
 structure vec3s:-:0x6 {
     0x0 x:s16angle;
@@ -43,9 +41,7 @@ structure vec3s:-:0x6 {
     0x4 z:s16angle;
 }
 
-preview vec3s {
-    multi:x:y:z;
-}
+preview vec3s "$x$, $y$, $z$";
 
 display fBase_c {
     textbox:"Instance Number":uniqueInstanceNum;
@@ -64,5 +60,3 @@ display dActorBase_c {
     textbox:"Scale":scale;
     textbox:"Maximum Z Acceleration":maxAccelZ;
 }
-
-object PLAYER:dActorBase_c;
