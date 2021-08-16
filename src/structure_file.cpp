@@ -34,7 +34,7 @@ void basicTypeU32_display(std::string name, baseTypeStruct d) {
 }
 void basicTypePtr_display(std::string name, baseTypeStruct d) {
     u32 val = _byteswap_ulong(d.data.us32);
-    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &val, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal)) {
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &val, NULL, NULL, "0x%08X", ImGuiInputTextFlags_CharsHexadecimal)) {
         DolphinReader::writeU32(d.addr, val);
     }
 }
@@ -58,7 +58,7 @@ void basicTypeS16_display(std::string name, baseTypeStruct d) {
 }
 void basicTypeS16Ang_display(std::string name, baseTypeStruct d) {
     s16 val = _byteswap_ushort(d.data.si16);
-    float num = val / 0xFFFF * 360;
+    float num = (float) val / 0xFFFF * 360;
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_Float, &num, 0, 0, "%.2fdeg")) {
         s16 newVal = round(num / 360.0f * 0xFFFF);
         DolphinReader::writeU16(d.addr, newVal);

@@ -253,6 +253,7 @@ std::vector<u32> readList(u32 address) {
 }
 
 u32 selectedInstance = 0x0;
+char selectedInstanceString[128];
 bool selectedInstanceExists = false;
 bool selectedInstanceValidType = false;
 
@@ -274,20 +275,22 @@ void DrawMainView() {
             for (auto el : list) {
                 u32 namePtr = _byteswap_ulong(read(el + 0x6c, u32));
                 readStr(namePtr, nameBuf);
-                char windowNameBuf[128];
-                sprintf(windowNameBuf, "%s##%08x", nameBuf, el);
-                if (ImGui::Selectable(windowNameBuf, el == selectedInstance)) {
+                char selectableNameBuf[128];
+                sprintf(selectableNameBuf, "%s##%08x", nameBuf, el);
+                selectedInstanceExists = (el == selectedInstance && strcmp(selectedInstanceString, selectableNameBuf) == 0);
+                bool wasSelected = ImGui::Selectable(selectableNameBuf, selectedInstanceExists);
+                if (wasSelected || selectedInstanceExists) {
                     selectedInstance = el;
-                    selectedInstanceExists = true;
+                    strcpy(selectedInstanceString, selectableNameBuf);
                     auto s = structures.getStruct(nameBuf);
                     selectedInstanceValidType = (s != NULL);
                     if (selectedInstanceValidType) {
                         selected.setType(s);
                     }
                 }
-                foundSelectedInstance |= el == selectedInstance;
+                foundSelectedInstance |= selectedInstanceExists;
             }
-            selectedInstanceExists &= foundSelectedInstance;
+            selectedInstanceExists = foundSelectedInstance;
             ImGui::EndChild();
             ImGui::PopStyleColor();
         }
