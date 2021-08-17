@@ -1,3 +1,5 @@
+#pragma once
+
 #include "nsmbw/types.h"
 
 #include <regex>
