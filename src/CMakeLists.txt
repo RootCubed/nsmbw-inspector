@@ -22,9 +22,4 @@ endif()
 
 target_sources(nsmbw-inspector PUBLIC ${NSMBWINSPECTOR_SRC})
 
-include(CheckLibraryExists)
-check_library_exists(m round "" LIBM)
-if(LIBM)
-    target_link_libraries(nsmbw-inspector m)
-endif()
 target_link_libraries(nsmbw-inspector IMGUI)

@@ -77,8 +77,6 @@ int main(int argc, char **argv) {
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(1); // Enable vsync
 
-    SDL_Renderer *rend = SDL_CreateRenderer(window, -1, 0);
-
     gl3wInit();
 
     float dpi;

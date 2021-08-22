@@ -1,5 +1,6 @@
 #include "displayers.h"
 #include <sstream>
+#include <cmath>
 
 BasicType::BasicType(int s = 0, std::string t = "") {
     typeSize = s;
@@ -80,7 +81,7 @@ void BasicTypeS16Ang::display(std::string name, baseTypeStruct d) {
     s16 val = _byteswap_ushort(d.data.si16);
     float num = (float) val / 0xFFFF * 360;
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_Float, &num, 0, 0, "%.2fdeg")) {
-        s16 newVal = round(num / 360.0f * 0xFFFF);
+        s16 newVal = std::round(num / 360.0f * 0xFFFF);
         DolphinReader::writeU16(d.addr, newVal);
     }
 }
