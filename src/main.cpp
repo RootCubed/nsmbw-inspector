@@ -223,10 +223,6 @@ void DrawStartupView() {
     ImGui::End();
 }
 
-void gen_random(char *s, int l) {
-    for (int c; c=rand()%62, *s++ = (c+"07="[(c+16)/26]), l-->1;);
-}
-
 #define read(addr, type) *(type *) DolphinReader::readValues((u32) (addr), sizeof(type))
 #define readU32 DolphinReader::readU32
 #define readU16 DolphinReader::readU16
