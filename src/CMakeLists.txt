@@ -3,6 +3,7 @@ add_executable(nsmbw-inspector)
 set(NSMBWINSPECTOR_SRC
     main.cpp
     structure_file.cpp
+    displayers.cpp
     DolphinReader/DolphinReader.cpp
     DolphinReader/Dolphin-memory-engine/Source/Common/MemoryCommon.cpp
     DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/DolphinAccessor.cpp
@@ -21,4 +22,5 @@ endif()
 
 target_sources(nsmbw-inspector PUBLIC ${NSMBWINSPECTOR_SRC})
 
+target_link_libraries(nsmbw-inspector m)
 target_link_libraries(nsmbw-inspector IMGUI)

@@ -43,18 +43,20 @@ typedef struct {
 
 class BasicType {
     public:
-    void (*display)(std::string, baseTypeStruct);
-    int size;
+    virtual void display(std::string, baseTypeStruct);
+    virtual std::string preview(baseTypeStruct);
+    int typeSize;
+    std::string typeName;
 
-    BasicType();
-    BasicType(int, void (*)(std::string, baseTypeStruct));
+    BasicType(int s, std::string t);
 };
 
 class Structure;
 
 typedef struct {
     bool isBasic;
-    bool modifyable;
+    bool isModifyable;
+    bool isPointer;
     std::string name;
     u32 offset;
 
@@ -65,6 +67,7 @@ typedef struct {
 } StructField;
 
 struct Previewer {
+    bool useDefaultPreview;
     std::vector<StructField *> fields;
     std::vector<std::string> str;
 };
@@ -73,6 +76,7 @@ struct Structure {
     std::string name;
     Structure *inherits;
     int size;
+    Previewer previewer;
     std::vector<StructField> fields;
 };
 
@@ -88,16 +92,15 @@ struct TempStructure {
 };
 
 class StructureInstance {
-    std::vector<char> data;
-
     Structure *type;
+
+    std::string buildPreview(StructField *, u32);
 
     public:
     StructureInstance();
     StructureInstance(Structure *);
 
     void setType(Structure *);
-    void updateData(std::vector<char> data);
     int getReadSize();
 
     void drawInstance(u32 ptr);
@@ -107,6 +110,7 @@ class StructureFile {
     std::vector<Structure> structs;
 
     void parseStructureBlocks(std::string);
+    void parsePreviewBlocks(std::string);
 
     public:
     StructureFile();

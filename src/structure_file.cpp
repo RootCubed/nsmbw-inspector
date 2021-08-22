@@ -1,6 +1,5 @@
-#include "DolphinReader/DolphinReader.h"
-#include "structure_file.h"
 #include "displayers.h"
+#include "structure_file.h"
 
 #include <unordered_set>
 #include <sstream>
@@ -17,40 +16,18 @@ int decHexToInt(std::string str) {
     return std::stoi(str, 0, 10);
 }
 
-BasicType::BasicType(int s, void (*disp)(std::string, baseTypeStruct)) {
-    size = s;
-    display = disp;
-}
-
-BasicType::BasicType() {
-    size = 0;
-    display = NULL;
-}
-
-BasicType basicTypeU32    (4, basicTypeU32_display);
-BasicType basicTypePtr    (4, basicTypePtr_display);
-BasicType basicTypeS32    (4, basicTypeS32_display);
-BasicType basicTypeU16    (2, basicTypeU16_display);
-BasicType basicTypeS16    (2, basicTypeS16_display);
-BasicType basicTypeS16Ang (2, basicTypeS16Ang_display);
-BasicType basicTypeU8     (1, basicTypeU8_display);
-BasicType basicTypeS8     (1, basicTypeS8_display);
-BasicType basicTypeFloat  (4, basicTypeFloat_display);
-BasicType basicTypeStr    (4, basicTypeStr_display);
-BasicType basicTypeJIS    (4, basicTypeJIS_display);
-
-std::map<std::string, BasicType> basicTypes = {
-    {std::string("u32"),       basicTypeU32},
-    {std::string("ptr"),       basicTypePtr},
-    {std::string("s32"),       basicTypeU32},
-    {std::string("u16"),       basicTypeU16},
-    {std::string("s16"),       basicTypeS16},
-    {std::string("s16angle"),  basicTypeS16Ang},
-    {std::string("u8"),        basicTypeU8},
-    {std::string("s8"),        basicTypeS8},
-    {std::string("float"),     basicTypeFloat},
-    {std::string("string"),    basicTypeStr},
-    {std::string("stringJIS"), basicTypeJIS}
+std::map<std::string, BasicType *> basicTypes = {
+    {std::string("u32"),       new BasicTypeU32()},
+    {std::string("ptr"),       new BasicTypePtr()},
+    {std::string("s32"),       new BasicTypeU32()},
+    {std::string("u16"),       new BasicTypeU16()},
+    {std::string("s16"),       new BasicTypeS16()},
+    {std::string("s16angle"),  new BasicTypeS16Ang()},
+    {std::string("u8"),        new BasicTypeU8()},
+    {std::string("s8"),        new BasicTypeS8()},
+    {std::string("float"),     new BasicTypeFloat()},
+    {std::string("string"),    new BasicTypeStr()},
+    {std::string("stringJIS"), new BasicTypeJIS()}
 };
 
 Structure &TempStructure::stru(std::vector<Structure> &vec) const {
@@ -59,7 +36,6 @@ Structure &TempStructure::stru(std::vector<Structure> &vec) const {
 
 StructureInstance::StructureInstance() {
     type = NULL;
-    data = std::vector<char>(0);
 }
 
 StructureInstance::StructureInstance(Structure *_type) {
@@ -70,14 +46,6 @@ void StructureInstance::setType(Structure *_type) {
     type = _type;
 }
 
-void StructureInstance::updateData(std::vector<char> _data) {
-    if (_data.size() != type->size) {
-        // something went wrong
-        return;
-    }
-    data = _data;
-}
-
 int StructureInstance::getReadSize() {
     if (type == NULL) return -1;
     return type->size;
@@ -85,11 +53,10 @@ int StructureInstance::getReadSize() {
 
 void StructureInstance::drawInstance(u32 ptr) {
     int rS = getReadSize();
+    std::vector<char> data(rS, 0);
     if (rS > 0) {
-        std::vector<char> data(rS, 0);
         void *tmp = DolphinReader::readValues(ptr, rS);
         std::memcpy(&data[0], tmp, rS);
-        updateData(data);
     } else {
         printf("data read error: readSize <= 0\n");
         return;
@@ -103,18 +70,38 @@ void StructureInstance::drawInstance(u32 ptr) {
         if (!noInherit) shouldDraw = ImGui::BeginTabItem(curr->name.c_str());
         if (shouldDraw) {
             for (auto &field : curr->fields) {
+                u32 valuePtr = ptr + field.offset;
+                if (field.isPointer) {
+                    valuePtr = _byteswap_ulong(*(u32 *) DolphinReader::readValues(valuePtr, 4));
+                }
                 if (field.isBasic) {
                     baseTypeStruct thisData;
-                    thisData.addr = ptr + field.offset;
-                    std::memcpy(thisData.data.binary, &data[0] + field.offset, field.ptr.base->size);
+                    thisData.addr = valuePtr;
+                    if (field.isPointer) {
+                        void *tmp = DolphinReader::readValues(valuePtr, field.ptr.base->typeSize);
+                        std::memcpy(thisData.data.binary, &tmp, field.ptr.base->typeSize);
+                    } else {
+                        std::memcpy(thisData.data.binary, &data[0] + field.offset, field.ptr.base->typeSize);
+                    }
                     field.ptr.base->display(field.name, thisData);
                 } else {
                     // build preview
                     std::ostringstream treeNodeStr;
-                    treeNodeStr << field.name << " [" << field.ptr.structure->name << "]";
+                    treeNodeStr << field.name << "[";
+                    
+                    // we pass the original pointer into here intentionally
+                    // this makes the recursive preview building approach a bit easier to implement
+                    std::string prev = buildPreview(&field, ptr);
+                    if (prev == "") {
+                        treeNodeStr << field.ptr.structure->name;
+                    } else {
+                        treeNodeStr << prev;
+                    }
+                    treeNodeStr << "]";
+                    treeNodeStr << "###" << field.name;
                     if (ImGui::TreeNode(treeNodeStr.str().c_str())) {
                         StructureInstance selected(field.ptr.structure);
-                        selected.drawInstance(ptr + field.offset);
+                        selected.drawInstance(valuePtr); // recursively draw the instances
                         ImGui::TreePop();
                     }
                 }
@@ -123,6 +110,43 @@ void StructureInstance::drawInstance(u32 ptr) {
         }
     } while (curr = curr->inherits);
     if (!noInherit) ImGui::EndTabBar();
+}
+
+std::string StructureInstance::buildPreview(StructField *field, u32 ptr) {
+    u32 valuePtr = ptr + field->offset;
+
+    int size;
+    if (field->isBasic) {
+        size = field->ptr.base->typeSize;
+    } else {
+        size = field->ptr.structure->size;
+    }
+    
+    if (field->isPointer) {
+        valuePtr = _byteswap_ulong(*(u32 *) DolphinReader::readValues(valuePtr, 4));
+    }
+    
+    void *fieldData = DolphinReader::readValues(valuePtr, size);
+
+    if (field->isBasic) {
+        baseTypeStruct thisData;
+        thisData.addr = ptr + field->offset;
+        std::memcpy(thisData.data.binary, fieldData, field->ptr.base->typeSize);
+        return field->ptr.base->preview(thisData);
+    }
+
+    std::ostringstream previewString;
+    Structure *curr = field->ptr.structure;
+    while (curr != NULL) {
+        if (!curr->previewer.useDefaultPreview) {
+            for (int i = 0; i < curr->previewer.str.size(); i++) {
+                previewString << curr->previewer.str[i];
+                previewString << buildPreview(curr->previewer.fields[i], valuePtr);
+            }
+        }
+        curr = curr->inherits;
+    }
+    return previewString.str();
 }
 
 StructureFile::StructureFile() {
@@ -138,8 +162,9 @@ StructureFile::StructureFile(std::string fileWithLineBreaks) {
     std::string file = std::regex_replace(fileWithLineBreaks, whitespace, "");
 
     parseStructureBlocks(file);
+    parsePreviewBlocks(file);
 
-    // todo: preview, display, object
+    // todo: display
 }
 
 void StructureFile::parseStructureBlocks(std::string file) {
@@ -158,6 +183,7 @@ void StructureFile::parseStructureBlocks(std::string file) {
         Structure s = Structure();
         s.name = name;
         s.size = -1; // will be changed later to the full size including inherited classes
+        s.previewer.useDefaultPreview = true;
         structs.push_back(s);
 
         TempStructure tempS;
@@ -237,10 +263,12 @@ void StructureFile::parseStructureBlocks(std::string file) {
             std::string typeName = fieldBlocks[3].str().c_str();
 
             StructField field;
-            field.modifyable = true;
+            field.isModifyable = true;
+            field.isPointer = false;
             field.name = name;
-            if (typeName[0] == '!') {
-                field.modifyable = false;
+            while (typeName[0] == '!' || typeName[0] == '*') {
+                if (typeName[0] == '!') field.isModifyable = false;
+                if (typeName[0] == '*') field.isPointer = true;
                 typeName.erase(0, 1);
             }
             if (tmpStructures.contains(typeName)) {
@@ -248,7 +276,7 @@ void StructureFile::parseStructureBlocks(std::string file) {
                 field.ptr.structure = &tmpStructures[typeName].stru(structs);
             } else if (basicTypes.contains(typeName)) {
                 field.isBasic = true;
-                field.ptr.base = &basicTypes[typeName];
+                field.ptr.base = basicTypes[typeName];
             } else {
                 std::ostringstream msg;
                 msg << "Structure " << stru.first << " contains type " << typeName << ", which couldn't be found.";
@@ -268,6 +296,72 @@ void StructureFile::parseStructureBlocks(std::string file) {
         }
     }
 }
+
+void StructureFile::parsePreviewBlocks(std::string file) {
+    std::regex previewBlockRegex("preview ([^ ]+) \\\"([^\\\"]+)\\\";", std::regex::ECMAScript);
+    std::smatch previewBlock;
+
+    std::string::const_iterator previewBlocksStart(file.cbegin());    
+    while (std::regex_search(previewBlocksStart, file.cend(), previewBlock, previewBlockRegex)) {
+        std::string structName = previewBlock[1].str();
+        std::string dispString = previewBlock[2].str();
+
+        Structure *structRef = NULL;
+        for (int i = 0; i < structs.size(); i++) {
+            if (structs[i].name == structName) {
+                structRef = &structs[i];
+                break;
+            }
+        }
+
+        if (structRef == NULL) {
+            std::ostringstream msg;
+            msg << "Previewer: structure \"" << structName << "\" could not be found.";
+            throw StructureFileException(msg.str());
+        }
+
+        structRef->previewer.useDefaultPreview = false;
+        
+        structRef->previewer.fields = std::vector<StructField *>(0);
+        structRef->previewer.str = std::vector<std::string>(0);
+
+        std::string currFieldName = "";
+        std::string currStrPart = "";
+        bool inField = false;
+        for (int i = 0; i < dispString.length(); i++) {
+            if (dispString[i] == '$') {
+                if (inField) {
+                    StructField *field = NULL;
+                    for (int j = 0; j < structRef->fields.size(); j++) {
+                        if (structRef->fields[j].name == currFieldName) {
+                            field = &structRef->fields[j];
+                        }
+                    }
+                    if (field == NULL) {
+                        std::ostringstream msg;
+                        msg << "In previewer for structure \"" << structName << "\": field \"" << currFieldName << "\" could not be found.";
+                        throw StructureFileException(msg.str());
+                    }
+                    structRef->previewer.fields.push_back(field);
+                } else {
+                    structRef->previewer.str.push_back(currStrPart);
+                }
+                currFieldName = "";
+                currStrPart = "";
+                inField = !inField;
+                continue;
+            }
+            if (inField) {
+                currFieldName += dispString[i];
+            } else {
+                currStrPart += dispString[i];
+            }
+        }
+
+        previewBlocksStart = previewBlock.suffix().first;
+    }
+}
+
 
 Structure *StructureFile::getStruct(std::string find) {
     for (auto &s : structs) {
