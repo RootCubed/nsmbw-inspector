@@ -25,7 +25,7 @@ sudo setcap cap_sys_ptrace=eip nsmbw-inspector
 ```
 
 ## Structure files
-NSMBW Inspector loads in a text file that describes classes and their fields on launch.
+NSMBW Inspector loads in a text file that describes classes and their fields on launch, called `structures.txt`.
 
 This is how the file is structured:
 ### General
@@ -34,9 +34,9 @@ It contains of description blocks, which are each explained below.
 
 These always have the following syntax:
 ```
-<block name> <headers>
+<block name> <headers> {
     <...>
-end
+}
 ```
 ### Structure
 A structure block describes a data structure, such as that of a class. The header contains three parameters, seperated by colons:
@@ -47,15 +47,17 @@ The structure size may be in decimal or in hexadecimal (in which case the number
 A structure block contains field definitions. These have the following syntax:
 `<offset to start of structure> <field name>:<field data type>;`
 
+The offset may have a plus sign before the number, which indicated that the offset is to be counted from the beginning of this structure, not from the base address of the base structure.
+
 The field data type may be one of the currently implemented basic types (see the [list](#basic-types) at the bottom) or the name of a different structure (This will then be a structure inside of another structure, not a pointer to it).
 
 Example:
 ```
-structure dBase:fBase:0xc
+structure dBase:fBase:0xc {
     0x0 firstLinkedNode:ptr;
     0x4 explanationString:stringJIS;
     0x8 nameString:string;
-end
+}
 ```
 This example defines a structure named `dBase` which inherits from `fBase` and has size `0xc`. It contains three fields:
 
@@ -63,7 +65,7 @@ This example defines a structure named `dBase` which inherits from `fBase` and h
 - `explanationString` with type `stringJIS` at offset `0x4`.
 - `nameString` with type `string` at offset `0x8`.
 
-### Display
+### Display (Not currently implemented)
 A display block describes a list of fields of a structure which should be displayed when a structure is viewed. The header contains one parameter, the structure which this display refers to.
 
 A display block contains displayers. These describe which field of the structure should be displayed in what style. A displayer has the following format:
@@ -75,10 +77,10 @@ Only the displayer style `textbox` is currently implemented. Future styles inclu
 
 Example:
 ```
-display dBase
+display dBase {
     textbox:"Object Name":nameString;
     textbox:"Explanation String":explanationString;
-end
+}
 ```
 This defines a display for the structure `dBase`. It contains two displayers:
 
@@ -87,20 +89,16 @@ This defines a display for the structure `dBase`. It contains two displayers:
 
 
 ### Preview
-A preview block describes a list of fields of a structure which should be displayed when a structure is used as a data type in a different structure. The header contains one parameter, the structure which this preview refers to.
+A preview block consists of a formatting string that gets be displayed when a structure is embedded in a different structure. The header contains one parameter, the structure which this preview refers to.
 
 A preview block contains a previewer. The previewer describes which fields of the structure should be displayed. A previewer has the following format:
-`<previewer style>:<field name 1>:<field name 2>:(...):<field name n>;`
-
-Only the previewer style `multi` is currently implemented. This is just multiple textboxes beneath each other.
+`"$field$, text, $field2"`. The field that should get inserted into the string is to be surrounded by dollar signs.
 
 Example:
 ```
-preview vec3
-    multi:x:y:z;
-end
+preview vec3 "$x$,$y$,$z$";
 ```
-This defines a preview for the structure `vec3`. The previewer has the type `multi` and shows the fields `x`, `y` and `z`.
+This defines a preview for the structure `vec3`. The previewer shows the fields `x`, `y` and `z` in the format `x,y,z`.
 
 ### Basic types
 Type | Description
