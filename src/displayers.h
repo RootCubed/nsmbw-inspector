@@ -8,6 +8,7 @@ class BasicTypeU32 : public BasicType {
     BasicTypeU32() : BasicType(4, "u32") {};
 
     void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
 };
 
 class BasicTypePtr : public BasicType {
@@ -15,6 +16,7 @@ class BasicTypePtr : public BasicType {
     BasicTypePtr() : BasicType(4, "ptr") {};
     
     void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
 };
 
 class BasicTypeS32 : public BasicType {
@@ -22,6 +24,7 @@ class BasicTypeS32 : public BasicType {
     BasicTypeS32() : BasicType(4, "s32") {};
     
     void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
 };
 
 class BasicTypeU16 : public BasicType {
@@ -29,6 +32,7 @@ class BasicTypeU16 : public BasicType {
     BasicTypeU16() : BasicType(2, "u16") {};
     
     void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
 };
 
 class BasicTypeS16 : public BasicType {
@@ -36,6 +40,7 @@ class BasicTypeS16 : public BasicType {
     BasicTypeS16() : BasicType(2, "s16") {};
     
     void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
 };
 
 class BasicTypeS16Ang : public BasicType {
@@ -51,6 +56,7 @@ class BasicTypeU8 : public BasicType {
     BasicTypeU8() : BasicType(1, "u8") {};
     
     void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
 };
 
 class BasicTypeS8 : public BasicType {
@@ -58,6 +64,7 @@ class BasicTypeS8 : public BasicType {
     BasicTypeS8() : BasicType(1, "s8") {};
     
     void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
 };
 
 class BasicTypeFloat : public BasicType {
@@ -65,6 +72,7 @@ class BasicTypeFloat : public BasicType {
     BasicTypeFloat() : BasicType(4, "float") {};
     
     void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
 };
 
 class BasicTypeStr : public BasicType {

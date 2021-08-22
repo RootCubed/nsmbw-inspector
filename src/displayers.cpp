@@ -24,12 +24,22 @@ void BasicTypeU32::display(std::string name, baseTypeStruct d) {
         DolphinReader::writeU32(d.addr, val);
     }
 }
+std::string BasicTypeU32::preview(baseTypeStruct d) {
+    u32 val = _byteswap_ulong(d.data.us32);
+    return std::to_string(val);
+}
 
 void BasicTypePtr::display(std::string name, baseTypeStruct d) {
     u32 val = _byteswap_ulong(d.data.us32);
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &val, NULL, NULL, "0x%08X", ImGuiInputTextFlags_CharsHexadecimal)) {
         DolphinReader::writeU32(d.addr, val);
     }
+}
+std::string BasicTypePtr::preview(baseTypeStruct d) {
+    u32 val = _byteswap_ulong(d.data.us32);
+    std::stringstream stream;
+    stream << "0x" << std::hex << val;
+    return stream.str();
 }
 
 void BasicTypeS32::display(std::string name, baseTypeStruct d) {
@@ -38,6 +48,10 @@ void BasicTypeS32::display(std::string name, baseTypeStruct d) {
         DolphinReader::writeU32(d.addr, val);
     }
 }
+std::string BasicTypeS32::preview(baseTypeStruct d) {
+    s32 val = _byteswap_ushort(d.data.si32);
+    return std::to_string(val);
+}
 
 void BasicTypeU16::display(std::string name, baseTypeStruct d) {
     u16 val = _byteswap_ushort(d.data.us16);
@@ -45,12 +59,21 @@ void BasicTypeU16::display(std::string name, baseTypeStruct d) {
         DolphinReader::writeU16(d.addr, val);
     }
 }
+std::string BasicTypeU16::preview(baseTypeStruct d) {
+    u16 val = _byteswap_ushort(d.data.us16);
+    return std::to_string(val);
+}
+
 
 void BasicTypeS16::display(std::string name, baseTypeStruct d) {
     s16 val = _byteswap_ushort(d.data.si16);
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U16, &val)) {
         DolphinReader::writeU16(d.addr, val);
     }
+}
+std::string BasicTypeS16::preview(baseTypeStruct d) {
+    s16 val = _byteswap_ushort(d.data.si16);
+    return std::to_string(val);
 }
 
 void BasicTypeS16Ang::display(std::string name, baseTypeStruct d) {
@@ -73,12 +96,20 @@ void BasicTypeU8::display(std::string name, baseTypeStruct d) {
         DolphinReader::writeU8(d.addr, val);
     }
 }
+std::string BasicTypeU8::preview(baseTypeStruct d) {
+    u8 val = d.data.us8;
+    return std::to_string(val);
+}
 
 void BasicTypeS8::display(std::string name, baseTypeStruct d) {
     s8 val = d.data.si8;
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_S8, &val)) {
         DolphinReader::writeU8(d.addr, val);
     }
+}
+std::string BasicTypeS8::preview(baseTypeStruct d) {
+    s8 val = d.data.si8;
+    return std::to_string(val);
 }
 
 void BasicTypeFloat::display(std::string name, baseTypeStruct d) {
@@ -87,6 +118,11 @@ void BasicTypeFloat::display(std::string name, baseTypeStruct d) {
     if (ImGui::InputFloat(name.c_str(), &val)) {
         DolphinReader::writeFloat(d.addr, val);
     }
+}
+std::string BasicTypeFloat::preview(baseTypeStruct d) {
+    u32 tmp = _byteswap_ulong(d.data.us32);
+    float val = *(float *) &tmp;
+    return std::to_string(val);
 }
 
 void BasicTypeStr::display(std::string name, baseTypeStruct d) {
