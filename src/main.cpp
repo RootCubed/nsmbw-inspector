@@ -263,24 +263,26 @@ void DrawMainView() {
             ImGui::Text("Instances");
             ImGui::PushStyleColor(ImGuiCol_ChildBg, 0xff404040);
             ImGui::BeginChild("ListBoxInstances", ImVec2(0, 0));
+
             std::vector<u32> list = readList(0x80377d48);
             char nameBuf[64];
             bool foundSelectedInstance = false;
             for (auto el : list) {
                 u32 namePtr = _byteswap_ulong(read(el + 0x6c, u32));
                 readStr(namePtr, nameBuf);
+
                 char selectableNameBuf[128];
                 sprintf(selectableNameBuf, "%s##%08x", nameBuf, el);
                 selectedInstanceExists = (el == selectedInstance && strcmp(selectedInstanceString, selectableNameBuf) == 0);
+
                 bool wasSelected = ImGui::Selectable(selectableNameBuf, selectedInstanceExists);
                 if (wasSelected || selectedInstanceExists) {
                     selectedInstance = el;
                     strcpy(selectedInstanceString, selectableNameBuf);
-                    auto s = structures.getStruct(nameBuf);
+                    Structure *s = structures.getStruct(nameBuf);
+                    
                     selectedInstanceValidType = (s != NULL);
-                    if (selectedInstanceValidType) {
-                        selected.setType(s);
-                    }
+                    if (selectedInstanceValidType) selected.setType(s);
                 }
                 foundSelectedInstance |= selectedInstanceExists;
             }

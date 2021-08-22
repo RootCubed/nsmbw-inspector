@@ -2,6 +2,10 @@
 #include <sstream>
 #include <cmath>
 
+// ----------------
+//    base type
+// ----------------
+
 BasicType::BasicType(int s = 0, std::string t = "") {
     typeSize = s;
     typeName = t;
@@ -19,6 +23,10 @@ std::string BasicType::preview(baseTypeStruct d) {
     return std::string(buf);
 }
 
+// ----------------
+//       u32
+// ----------------
+
 void BasicTypeU32::display(std::string name, baseTypeStruct d) {
     u32 val = _byteswap_ulong(d.data.us32);
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &val)) {
@@ -29,6 +37,10 @@ std::string BasicTypeU32::preview(baseTypeStruct d) {
     u32 val = _byteswap_ulong(d.data.us32);
     return std::to_string(val);
 }
+
+// ----------------
+//       ptr
+// ----------------
 
 void BasicTypePtr::display(std::string name, baseTypeStruct d) {
     u32 val = _byteswap_ulong(d.data.us32);
@@ -43,6 +55,10 @@ std::string BasicTypePtr::preview(baseTypeStruct d) {
     return stream.str();
 }
 
+// ----------------
+//       s32
+// ----------------
+
 void BasicTypeS32::display(std::string name, baseTypeStruct d) {
     s32 val = _byteswap_ulong(d.data.si32);
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_S32, &val)) {
@@ -53,6 +69,10 @@ std::string BasicTypeS32::preview(baseTypeStruct d) {
     s32 val = _byteswap_ushort(d.data.si32);
     return std::to_string(val);
 }
+
+// ----------------
+//       u16
+// ----------------
 
 void BasicTypeU16::display(std::string name, baseTypeStruct d) {
     u16 val = _byteswap_ushort(d.data.us16);
@@ -65,6 +85,9 @@ std::string BasicTypeU16::preview(baseTypeStruct d) {
     return std::to_string(val);
 }
 
+// ----------------
+//       s16
+// ----------------
 
 void BasicTypeS16::display(std::string name, baseTypeStruct d) {
     s16 val = _byteswap_ushort(d.data.si16);
@@ -76,6 +99,10 @@ std::string BasicTypeS16::preview(baseTypeStruct d) {
     s16 val = _byteswap_ushort(d.data.si16);
     return std::to_string(val);
 }
+
+// ----------------
+//     s16angle
+// ----------------
 
 void BasicTypeS16Ang::display(std::string name, baseTypeStruct d) {
     s16 val = _byteswap_ushort(d.data.si16);
@@ -91,6 +118,10 @@ std::string BasicTypeS16Ang::preview(baseTypeStruct d) {
     return std::to_string(num) + "°";
 }
 
+// ----------------
+//       u8
+// ----------------
+
 void BasicTypeU8::display(std::string name, baseTypeStruct d) {
     u8 val = d.data.us8;
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U8, &val)) {
@@ -102,6 +133,10 @@ std::string BasicTypeU8::preview(baseTypeStruct d) {
     return std::to_string(val);
 }
 
+// ----------------
+//       s8
+// ----------------
+
 void BasicTypeS8::display(std::string name, baseTypeStruct d) {
     s8 val = d.data.si8;
     if (ImGui::InputScalar(name.c_str(), ImGuiDataType_S8, &val)) {
@@ -112,6 +147,10 @@ std::string BasicTypeS8::preview(baseTypeStruct d) {
     s8 val = d.data.si8;
     return std::to_string(val);
 }
+
+// ----------------
+//      float
+// ----------------
 
 void BasicTypeFloat::display(std::string name, baseTypeStruct d) {
     u32 tmp = _byteswap_ulong(d.data.us32);
@@ -125,6 +164,10 @@ std::string BasicTypeFloat::preview(baseTypeStruct d) {
     float val = *(float *) &tmp;
     return std::to_string(val);
 }
+
+// ----------------
+//     string
+// ----------------
 
 void BasicTypeStr::display(std::string name, baseTypeStruct d) {
     char strBuf[256];
@@ -141,6 +184,10 @@ std::string BasicTypeStr::preview(baseTypeStruct d) {
     memcpy(strBuf, tmp, 256);
     return strBuf;
 }
+
+// ----------------
+//    stringJIS
+// ----------------
 
 void BasicTypeJIS::display(std::string name, baseTypeStruct d) {
     char strBuf[256];

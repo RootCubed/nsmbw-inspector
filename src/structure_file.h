@@ -12,20 +12,6 @@
 
 #include <imgui.h>
 
-/*typedef enum {
-    signed32,
-    unsigned32,
-    pointer,
-    signed16,
-    singed16ang,
-    unsigned16,
-    signed8,
-    unsigned8,
-    floatingPoint,
-    stringASCII,
-    stringJIS
-} ebaseType;*/
-
 typedef struct {
     u32 addr;
     union {
