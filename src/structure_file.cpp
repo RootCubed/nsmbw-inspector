@@ -214,7 +214,7 @@ void StructureFile::parseStructureBlocks(std::string file) {
                 throw StructureFileException(msg.str());
             }
             nextInh = &tmpStructures[currInh->inherit];
-            if (nextInh->stru(structs).inherits != NULL) break; // already has inheritance info
+            //if (nextInh->stru(structs).inherits != NULL) break; // already has inheritance info
             if (visited.contains(nextInh->stru(structs).name)) {
                 std::ostringstream msg;
                 msg << "Structure " << stru.first << " is self-referential!";
@@ -229,20 +229,16 @@ void StructureFile::parseStructureBlocks(std::string file) {
     // set structure sizes
     for (auto &stru : tmpStructures) {
         std::vector<TempStructure *> path(0);
-        auto tmp = &stru.second;
+        TempStructure *tmp = &stru.second;
         path.push_back(tmp);
-        while (tmp->inherit != "-" && tmpStructures[tmp->inherit].stru(structs).size == -1) {
+        while (tmp->inherit != "-") {
             tmp = &tmpStructures[tmp->inherit];
             path.push_back(tmp);
         }
         int size = 0;
         while (path.size() > 0) {
             TempStructure *el = path[path.size() - 1];
-            if (el->stru(structs).size > -1) {
-                size += el->stru(structs).size;
-            } else {
-                size += el->localSize;
-            }
+            size += el->localSize;
             el->stru(structs).size = size;
             path.pop_back();
         }
