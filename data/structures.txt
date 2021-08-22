@@ -1,0 +1,84 @@
+structure fBase_c:-:0x64 {
+    0x0 uniqueInstanceNum:!u32;
+    0x4 objectFlags:u32;
+    0x8 objectID:u16;
+    0xa creationDeletionStatus:u8;
+    0xb shouldDestroy:!u8;
+    0x60 vt:ptr;
+}
+
+structure dBase_c:fBase_c:0xc {
+    +0x0 firstLinkedNode:ptr;
+    +0x4 explanationString:stringJIS;
+    +0x8 nameString:string;
+}
+
+structure dBaseActor_c:dBase_c:0xb5 {
+    +0x3c position:!vec3;
+    +0x54 deltaPos:vec3;
+    +0x6c scale:!vec3;
+    +0x90 rotation:!vec3s;
+    +0xa8 maxAccelZ:float;
+}
+
+structure dActor_c:dBaseActor_c:0x26d {}
+
+structure daPlBase_c:dActor_c:0x1244 {
+    +0x109e demoState:sStateMethodUsr_FI_c;
+    +0x10ea state:sStateMethodUsr_FI_c;
+}
+
+structure sStateID_c:-:0x30 {
+    0x0 vt:ptr;
+    0x4 name:string;
+}
+
+preview sStateID_c "$name$";
+
+structure sStateMethod_c:-:0x24 {
+    0x0 vt:ptr;
+    0x14 newStateID:*sStateID_c;
+    0x18 prevState:*sStateID_c;
+    0x1c stateID:*sStateID_c;
+}
+
+preview sStateMethod_c "$stateID$";
+
+structure sStateMethodUsr_FI_c:sStateMethod_c:0x0 {}
+
+structure vec3:-:0xc {
+    0x0 x:float;
+    0x4 y:float;
+    0x8 z:float;
+}
+
+preview vec3 "$x$, $y$, $z$";
+
+structure vec3s:-:0x6 {
+    0x0 x:s16angle;
+    0x2 y:s16angle;
+    0x4 z:s16angle;
+}
+
+preview vec3s "$x$, $y$, $z$";
+
+structure PLAYER:daPlBase_c:0x0 {}
+structure YOSHI:daPlBase_c:0x0 {}
+
+display fBase_c {
+    textbox:"Instance Number":uniqueInstanceNum;
+    textbox:"Object ID":objectID;
+    textbox:"Vftable":vftable;
+}
+
+display dBase_c {
+    textbox:"Object Name":nameString;
+    textbox:"Explanation String":explanationString;
+}
+
+display dActorBase_c {
+    textbox:"Position":position;
+    textbox:"Rotation (Degrees)":rotation;
+    textbox:"Scale":scale;
+    textbox:"Maximum Z Acceleration":maxAccelZ;
+}
