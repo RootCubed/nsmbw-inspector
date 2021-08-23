@@ -18,13 +18,13 @@ BasicType::BasicType(int s = 0, std::string t = "") {
 
 void BasicType::display(std::string name, baseTypeStruct d) {
     char buf[256];
-    snprintf(buf, 256, "[%s].display not found.", typeName.c_str());
+    snprintf(buf, 256, "display_default[%s]", typeName.c_str());
     ImGui::InputText(name.c_str(), buf, 256, ImGuiInputTextFlags_ReadOnly);
 }
 
 std::string BasicType::preview(baseTypeStruct d) {
     char buf[256];
-    snprintf(buf, 256, "[%s].preview not found.", typeName.c_str());
+    snprintf(buf, 256, "preview_default[%s]", typeName.c_str());
     return std::string(buf);
 }
 
@@ -120,7 +120,10 @@ void BasicTypeS16Ang::display(std::string name, baseTypeStruct d) {
 std::string BasicTypeS16Ang::preview(baseTypeStruct d) {
     s16 val = _byteswap_ushort(d.data.si16);
     float num = (float) val / 0xFFFF * 360;
-    return std::to_string(num) + "°";
+    std::stringstream stream;
+    stream.precision(1);
+    stream << std::fixed << num << "°";
+    return stream.str();
 }
 
 // ----------------
@@ -167,7 +170,10 @@ void BasicTypeFloat::display(std::string name, baseTypeStruct d) {
 std::string BasicTypeFloat::preview(baseTypeStruct d) {
     u32 tmp = _byteswap_ulong(d.data.us32);
     float val = *(float *) &tmp;
-    return std::to_string(val);
+    std::stringstream stream;
+    stream.precision(1);
+    stream << std::fixed << val;
+    return stream.str();
 }
 
 // ----------------
