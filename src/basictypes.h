@@ -1,6 +1,5 @@
 #pragma once
 
-#include "DolphinReader/DolphinReader.h"
 #include "structure_file.h"
 
 class BasicTypeU32 : public BasicType {

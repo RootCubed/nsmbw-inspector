@@ -1,6 +1,11 @@
+#include "DolphinReader/DolphinReader.h"
+
 #include "basictypes.h"
+
 #include <sstream>
 #include <cmath>
+
+#include <imgui.h>
 
 // ----------------
 //    base type

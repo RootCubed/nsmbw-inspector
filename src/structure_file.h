@@ -1,16 +1,10 @@
 #pragma once
 
+#include "helper.h"
 #include "nsmbw/types.h"
 
-#include <regex>
 #include <string>
-#include <iostream>
-#include <utility>
-#include <map>
-
-#include "helper.h"
-
-#include <imgui.h>
+#include <vector>
 
 typedef struct {
     u32 addr;
@@ -28,13 +22,14 @@ typedef struct {
 } baseTypeStruct;
 
 class BasicType {
-    public:
-    virtual void display(std::string, baseTypeStruct);
-    virtual std::string preview(baseTypeStruct);
+public:
     int typeSize;
     std::string typeName;
-
+    
     BasicType(int s, std::string t);
+
+    virtual void display(std::string, baseTypeStruct);
+    virtual std::string preview(baseTypeStruct);
 };
 
 class Structure;
