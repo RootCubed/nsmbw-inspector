@@ -3,7 +3,7 @@ add_executable(nsmbw-inspector)
 set(NSMBWINSPECTOR_SRC
     main.cpp
     structure_file.cpp
-    displayers.cpp
+    basictypes.cpp
     DolphinReader/DolphinReader.cpp
     DolphinReader/Dolphin-memory-engine/Source/Common/MemoryCommon.cpp
     DolphinReader/Dolphin-memory-engine/Source/DolphinProcess/DolphinAccessor.cpp
