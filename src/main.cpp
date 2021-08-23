@@ -283,6 +283,8 @@ void DrawMainView() {
 
                     selectedInstanceValidType = (s != NULL);
                     if (selectedInstanceValidType) selected.setType(s);
+
+                    selectedInstanceExists = true;
                 }
                 foundSelectedInstance |= selectedInstanceExists;
             }
@@ -300,6 +302,18 @@ void DrawMainView() {
 
         ImGui::BeginChild("Inspector", ImVec2(0, 0), true);
         {
+            ImGui::Checkbox("Show all structs/fields", &selected.showAllFields);
+            ImGui::SameLine();
+            ImGui::TextDisabled("(?)");
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetNextWindowSize(ImVec2(ImGui::GetWindowWidth() / 2, 0));
+                ImGui::BeginTooltip();
+                ImGui::TextWrapped("Shows/hides the fields which are not defined in a displayer for a class. If there are none to show, the class itself also gets hidden.");
+                ImGui::EndTooltip();
+            }
+            
+            ImGui::Separator();
+
             if (!selectedInstanceExists) {
                 ImGui::TextWrapped("Select an instance to view its properties.");
             } else if (!selectedInstanceValidType) {

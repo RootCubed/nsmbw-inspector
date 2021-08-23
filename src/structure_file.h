@@ -78,6 +78,7 @@ class StructureInstance {
     std::string buildPreview(StructField *, u32);
 
     public:
+    bool showAllFields = false;
     StructureInstance();
     StructureInstance(Structure *);
 

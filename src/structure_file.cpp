@@ -75,6 +75,9 @@ void StructureInstance::drawInstance(u32 ptr) {
     if (!noInherit) ImGui::BeginTabBar("Structs");
     do {
         bool shouldDraw = true;
+        if (curr->fields.size() == 0 && !showAllFields) {
+            continue;
+        }
         if (!noInherit) shouldDraw = ImGui::BeginTabItem(curr->name.c_str());
         if (shouldDraw) {
             for (auto &field : curr->fields) {
