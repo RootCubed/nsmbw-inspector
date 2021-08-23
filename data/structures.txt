@@ -3,9 +3,9 @@ structure fBase_c:-:0x64 {
     0x4 objectFlags:u32;
     0x8 objectID:u16;
     0xa creationDeletionStatus:u8;
-    0xb shouldDestroy:!u8;
-    0xc wasAlreadyCreated:!u8;
-    0xd wasAbleToCreateInstantly:!u8;
+    0xb shouldDestroy:!bool;
+    0xc wasAlreadyCreated:!bool;
+    0xd wasAbleToCreateInstantly:!bool;
     0xe type:u8;
     0xf processFlag:u8;
     0x10 mng:fManager_c;

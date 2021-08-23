@@ -34,7 +34,8 @@ std::map<std::string, BasicType *> basicTypes = {
     {std::string("s8"),        new BasicTypeS8()},
     {std::string("float"),     new BasicTypeFloat()},
     {std::string("string"),    new BasicTypeStr()},
-    {std::string("stringJIS"), new BasicTypeJIS()}
+    {std::string("stringJIS"), new BasicTypeJIS()},
+    {std::string("bool"),      new BasicTypeBool()}
 };
 
 Structure &TempStructure::stru(std::vector<Structure> &vec) const {
@@ -162,7 +163,6 @@ StructureFile::StructureFile() {
 
 StructureFile::StructureFile(std::string fileWithLineBreaks) {
     structs = std::vector<Structure>(0);
-    printf("loading file...");
 
     std::regex whitespace("\\n|\\r");
 

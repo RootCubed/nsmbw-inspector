@@ -201,3 +201,18 @@ void BasicTypeJIS::display(std::string name, baseTypeStruct d) {
     strcpy(strBuf, "[stringJIS]");
     ImGui::InputText(name.c_str(), strBuf, 256);
 }
+
+// ----------------
+//      bool
+// ----------------
+
+void BasicTypeBool::display(std::string name, baseTypeStruct d) {
+    bool val = d.data.us8 == 1;
+    if (ImGui::Checkbox(name.c_str(), &val)) {
+        DolphinReader::writeU8(d.addr, val);
+    }
+}
+std::string BasicTypeBool::preview(baseTypeStruct d) {
+    bool val = d.data.us8 == 1;
+    return std::to_string(val);
+}

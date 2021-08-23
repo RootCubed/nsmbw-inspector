@@ -88,3 +88,11 @@ class BasicTypeJIS : public BasicType {
     
     void display(std::string, baseTypeStruct) override;
 };
+
+class BasicTypeBool : public BasicType {
+    public:
+    BasicTypeBool() : BasicType(1, "bool") {};
+    
+    void display(std::string, baseTypeStruct) override;
+    std::string preview(baseTypeStruct) override;
+};
