@@ -37,7 +37,7 @@ StructureFile structures;
 
 int main(int argc, char **argv) {
     #ifdef WIN32
-    SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+    SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
     #endif
     // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -101,8 +101,8 @@ int main(int argc, char **argv) {
     style.WindowRounding = 6;
 
     ImFontConfig cfg;
-    cfg.SizePixels = 13 * highDPIscaleFactor;
-    io.Fonts->AddFontFromFileTTF("iosevka-ss01-regular.ttf", 13 * highDPIscaleFactor, &cfg, io.Fonts->GetGlyphRangesJapanese());
+    cfg.SizePixels = 14 * highDPIscaleFactor;
+    io.Fonts->AddFontFromFileTTF("iosevka-ss01-regular.ttf", 14 * highDPIscaleFactor, &cfg, io.Fonts->GetGlyphRangesJapanese());
     io.Fonts->Build();
     cfg.GlyphOffset.y = highDPIscaleFactor;
 
@@ -280,7 +280,7 @@ void DrawMainView() {
                     selectedInstance = el;
                     strcpy(selectedInstanceString, selectableNameBuf);
                     Structure *s = structures.getStruct(nameBuf);
-                    
+
                     selectedInstanceValidType = (s != NULL);
                     if (selectedInstanceValidType) selected.setType(s);
                 }
