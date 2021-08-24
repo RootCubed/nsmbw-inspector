@@ -62,11 +62,11 @@ int StructureInstance::getReadSize() {
 void StructureInstance::drawInstance(u32 ptr) {
     int rS = getReadSize();
     std::vector<char> data(rS, 0);
-    if (rS > 0) {
+    if (rS > 0 && rS < MEMBUF_SIZE) {
         void *tmp = DolphinReader::readValues(ptr, rS);
         std::memcpy(&data[0], tmp, rS);
     } else {
-        printf("data read error: readSize <= 0\n");
+        printf("data read error: readSize = %d\n", rS);
         return;
     }
     Structure *curr = type;

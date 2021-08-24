@@ -1,5 +1,9 @@
+#pragma once
+
 #include "Dolphin-memory-engine/Source/DolphinProcess/DolphinAccessor.h"
 #include "Dolphin-memory-engine/Source/Common/CommonUtils.h"
+
+#define MEMBUF_SIZE 0x100000
 
 class DolphinReader {
     public:

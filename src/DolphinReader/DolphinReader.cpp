@@ -4,7 +4,7 @@
 #include <utility>
 
 
-char memoryBuffer[0x10000];
+char memoryBuffer[MEMBUF_SIZE];
 
 u32 dist;
 
