@@ -102,7 +102,10 @@ int main(int argc, char **argv) {
 
     ImFontConfig cfg;
     cfg.SizePixels = 14 * highDPIscaleFactor;
-    io.Fonts->AddFontFromFileTTF("iosevka-ss01-regular.ttf", 14 * highDPIscaleFactor, &cfg, io.Fonts->GetGlyphRangesJapanese());
+    io.Fonts->AddFontFromFileTTF("iosevka-ss01-regular.ttf", 14 * highDPIscaleFactor, &cfg);
+
+    cfg.MergeMode = true;
+    io.Fonts->AddFontFromFileTTF("sarasa-term-j-regular.ttf", 14 * highDPIscaleFactor, &cfg, io.Fonts->GetGlyphRangesJapanese());
     io.Fonts->Build();
     cfg.GlyphOffset.y = highDPIscaleFactor;
 
