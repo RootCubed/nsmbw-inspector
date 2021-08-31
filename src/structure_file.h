@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <cstring>
 
 typedef struct {
     u32 addr;
@@ -107,8 +108,8 @@ struct StructureFileException : public std::exception {
 
     public:
     StructureFileException(const std::string &message) noexcept {
-        std::strcpy(msg, "Error parsing structure file: ");
-        std::strcat(msg, message.c_str());
+        strcpy(msg, "Error parsing structure file: ");
+        strcat(msg, message.c_str());
     }
 
 	const char * what () const throw () {
