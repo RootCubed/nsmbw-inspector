@@ -38,6 +38,8 @@ structure dBaseActor_c:dBase_c:0xb5 {
 
 structure dActor_c:dBaseActor_c:0x26d {}
 
+structure dWmActor_c:dBaseActor_c:0xd4 {}
+
 structure daPlBase_c:dActor_c:0x1244 {
     +0x109e demoState:sStateMethodUsr_FI_c;
     +0x10ea state:sStateMethodUsr_FI_c;
@@ -60,6 +62,15 @@ structure sStateMethod_c:-:0x24 {
 preview sStateMethod_c "$stateID$";
 
 structure sStateMethodUsr_FI_c:sStateMethod_c:0x0 {}
+
+structure dBg_autoScroll_c:-:0x1c {
+    0xc val:float;
+}
+
+structure dBg_c:dBase_c:0x90a3c {
+    0x9003c autoscroll1:dBg_autoScroll_c;
+    0x9003c autoscroll2:dBg_autoScroll_c;
+}
 
 structure vec3:-:0xc {
     0x0 x:float;
@@ -109,3 +120,6 @@ structure MULTI_PLAY_COURSE_SELECT:dScene_c:0x0 {}
 structure CURSOR:dBase_c:0x0 {}
 structure PLAYER:daPlBase_c:0x0 {}
 structure YOSHI:daPlBase_c:0x0 {}
+structure WM_TEST:dWmActor_c:0x0 {}
+structure WM_TEST2:dWmActor_c:0x0 {}
+structure BG_GM:dBg_c:0x138 {}
