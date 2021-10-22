@@ -14,6 +14,7 @@
 #include <math.h>
 #include <string.h>
 #include <vector>
+#include <map>
 
 #include "helper.h"
 #include "structure_file.h"
@@ -27,7 +28,35 @@
 
 #define GLSL_VERSION "#version 330"
 
+// define some macros for quick access to dolphinreader
+#define read(addr, type) *(type *) DolphinReader::readValues((u32) (addr), sizeof(type))
+#define readU32 DolphinReader::readU32
+#define readU16 DolphinReader::readU16
+#define readU8 DolphinReader::readU8
+#define writeU32 DolphinReader::writeU32
+#define writeU16 DolphinReader::writeU16
+#define writeU8 DolphinReader::writeU8
+#define readStr(addr, buf) void *tmp = DolphinReader::readValues((u32) (addr), sizeof(buf));\
+memcpy((void *) buf, tmp, sizeof(buf))
+
 int status = 0;
+
+enum gameVer {
+    PALv1, PALv2,
+    NTSCv1, NTSCv2,
+    JPNv1, JPNv2,
+    VER_UNKNOWN
+};
+
+const std::map<gameVer, u32> listPtrs {
+    {PALv1, 0x80377d48}, {PALv2, 0x80377d48},
+    {NTSCv1, 0x80377d10}, {NTSCv2, 0x80377a10},
+    {JPNv1, 0x80377790}, {JPNv2, 0x80377790},
+    {VER_UNKNOWN, 0x0}
+};
+
+gameVer currVersion = VER_UNKNOWN;
+bool isOtherNode = false;
 
 void DrawStartupView();
 void InitMainView();
@@ -214,10 +243,49 @@ void DrawStartupView() {
             case DolphinComm::DolphinAccessor::DolphinStatus::notRunning:
                 ImGui::Text("Dolphin is not running. Please start Dolphin and try again.");
                 break;
-            case DolphinComm::DolphinAccessor::DolphinStatus::hooked:
-                ImGui::Text("Hooked to Dolphin!");
+            case DolphinComm::DolphinAccessor::DolphinStatus::hooked: {
                 status = 1;
+                    u16 offs0 = readU32(0x80768D50) & 0xFFFF;
+                    u16 offs40 = readU32(0x80768D90) & 0xFFFF;
+                    switch (offs0) {
+                        case 0x6DE1:
+                            currVersion = PALv1;
+                            isOtherNode = false;
+                            break;
+                        case 0x6CA1:
+                            currVersion = NTSCv1;
+                            isOtherNode = true;
+                            break;
+                        case 0x6AB1:
+                            currVersion = JPNv1;
+                            isOtherNode = true;
+                            break;
+                        default:
+                            switch (offs40) {
+                                case 0x6DA1:
+                                    currVersion = PALv2;
+                                    isOtherNode = true;
+                                    break;
+                                case 0x6C61:
+                                    currVersion = NTSCv2;
+                                    isOtherNode = true;
+                                    break;
+                                case 0x6A71:
+                                    currVersion = JPNv2;
+                                    isOtherNode = true;
+                                    break;
+                                default:
+                                    currVersion = VER_UNKNOWN;
+                                    status = 0;
+                            }
+                    }
+                if (status == 1) {
+                    ImGui::Text("Hooked to Dolphin! Waiting for draw list to show up in memory...");
+                } else {
+                    ImGui::Text("Unknown game version found.");
+                }
                 break;
+            }
             case DolphinComm::DolphinAccessor::DolphinStatus::unHooked:
                 ImGui::Text("Not hooked to Dolphin yet.");
                 break;
@@ -226,25 +294,29 @@ void DrawStartupView() {
     ImGui::End();
 }
 
-#define read(addr, type) *(type *) DolphinReader::readValues((u32) (addr), sizeof(type))
-#define readU32 DolphinReader::readU32
-#define readU16 DolphinReader::readU16
-#define readU8 DolphinReader::readU8
-#define writeU32 DolphinReader::writeU32
-#define writeU16 DolphinReader::writeU16
-#define writeU8 DolphinReader::writeU8
-#define readStr(addr, buf) void *tmp = DolphinReader::readValues((u32) (addr), sizeof(buf));\
-memcpy((void *) buf, tmp, sizeof(buf))
-
 std::vector<u32> readList(u32 address) {
     std::vector<u32> res(0);
     PTMFList drawMng = read(address, PTMFList);
-    fLiNdBa_c currNode = read(_byteswap_ulong(drawMng.start), fLiNdBa_c);
-    int i = 0;
-    while (currNode.next != 0 && i < 500) {
-        res.push_back(_byteswap_ulong(currNode.thisobj));
-        currNode = read(_byteswap_ulong(currNode.next), fLiNdBa_c);
-        i++;
+    if (!isOtherNode) {
+        fLiNdBa_c_v1 currNode = read(_byteswap_ulong(drawMng.start), fLiNdBa_c_v1);
+        int i = 0;
+        while (currNode.next != 0 && i < 500) {
+            res.push_back(_byteswap_ulong(currNode.thisobj));
+            currNode = read(_byteswap_ulong(currNode.next), fLiNdBa_c_v1);
+            i++;
+        }
+    } else {
+        fLiNdBa_c_v2 currNode = read(_byteswap_ulong(drawMng.start), fLiNdBa_c_v2);
+        int i = 0;
+        while ((currNode.next != 0 || currNode.otherNext != 0) && i < 500) {
+            res.push_back(_byteswap_ulong(currNode.thisobj));
+            if (currNode.next == 0) {
+                currNode = read(_byteswap_ulong(currNode.otherNext), fLiNdBa_c_v2);
+            } else {
+                currNode = read(_byteswap_ulong(currNode.next), fLiNdBa_c_v2);
+            }
+            i++;
+        }
     }
     return res;
 }
@@ -267,7 +339,7 @@ void DrawMainView() {
             ImGui::PushStyleColor(ImGuiCol_ChildBg, 0xff404040);
             ImGui::BeginChild("ListBoxInstances", ImVec2(0, 0));
 
-            std::vector<u32> list = readList(0x80377d48);
+            std::vector<u32> list = readList(listPtrs.at(currVersion));
             char nameBuf[64];
             bool foundSelectedInstance = false;
             for (auto el : list) {

@@ -1,9 +1,18 @@
 #include "../../types.h"
 
-class fLiNdBa_c {
+class fLiNdBa_c_v1 {
     public:
     u32 prev; //fLiNdBa_c *
     u32 next; //fLiNdBa_c *
+    u32 thisobj; // void *
+};
+
+class fLiNdBa_c_v2 {
+    public:
+    u32 prev; //fLiNdBa_c *
+    u32 next; //fLiNdBa_c *
+    u32 otherPrev; //fLiNdBa_c *
+    u32 otherNext; //fLiNdBa_c *
     u32 thisobj; // void *
 };
 
