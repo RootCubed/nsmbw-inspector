@@ -40,6 +40,19 @@ structure dActor_c:dBaseActor_c:0x26d {}
 
 structure dWmActor_c:dBaseActor_c:0xd4 {}
 
+structure dActorState_c:dActor_c:0x3c {
+    0x3ac state:sStateMethod_c;
+}
+
+structure dPosGoAndComeExeFrm_c:-:0x999 {
+    0x0 state:sStateMethodUsr_FI_c;
+    0x5c position:float;
+}
+
+structure daEnOP_c:dActor_c:0x9999 {
+    0x564 posgo:dPosGoAndComeExeFrm_c;
+}
+
 structure daPlBase_c:dActor_c:0x1244 {
     +0x109e demoState:sStateMethodUsr_FI_c;
     +0x10ea state:sStateMethodUsr_FI_c;
@@ -123,3 +136,8 @@ structure YOSHI:daPlBase_c:0x0 {}
 structure WM_TEST:dWmActor_c:0x0 {}
 structure WM_TEST2:dWmActor_c:0x0 {}
 structure BG_GM:dBg_c:0x138 {}
+structure BLOCK_LIGHT:dActor_c:0x0 {}
+structure EN_OBJ_POL:daEnOP_c:0x0 {}
+structure AC_GEAR_GYRATION:dActor_c:0x0 {}
+structure AC_LIFT_FALL:dActorState_c:0x0 {}
+structure OBJ_CENTER2:dActor_c:0x0 {}
