@@ -1,3 +1,63 @@
+# New Super Mario Bros. Wii
+
+version PALv1 {
+    0x80768D52:2:=0x6DE1;
+}
+
+version NTSCv1 {
+    0x80768D52:2:=0x6CA1;
+}
+
+version JPNv1 {
+    0x80768D52:2:=0x6AB1;
+}
+
+version PALv2 {
+    0x80768D52:2:!=0x6DE1;
+    0x80768D52:2:!=0x6CA1;
+    0x80768D52:2:!=0x6AB1;
+    
+    0x80768D92:2:!=0x6DA1;
+}
+
+version NTSCv2 {
+    0x80768D52:2:!=0x6DE1;
+    0x80768D52:2:!=0x6CA1;
+    0x80768D52:2:!=0x6AB1;
+    
+    0x80768D92:2:!=0x6C61;
+}
+
+version JPNv2 {
+    0x80768D52:2:!=0x6DE1;
+    0x80768D52:2:!=0x6CA1;
+    0x80768D52:2:!=0x6AB1;
+    
+    0x80768D92:2:!=0x6A71;
+}
+
+// todo: rework version specific stuff (maybe [PALv1] {} or smth)
+inspectable "Draw List":list {
+    // ptr: pointer to some location which will be used to access the list
+    ptr:PALv1:0x80377d48;
+    ptr:PALv2:0x80377d48;
+    ptr:NTSCv1:0x80377d10;
+    ptr:NTSCv2:0x80377a10;
+    ptr:JPNv1:0x80377790;
+    ptr:JPNv2:0x80377790;
+
+    name:thisobj:*dBase_c:nameString:string;
+    basetype:*fLiNdBa_c;
+    startEl:
+    next:next;
+}
+
+structure fLiNdBa_c_v1:-:0xc {
+    0x0 prev:*fLiNdBa_c_v1;
+    0x4 next:*fLiNdBa_c_v1;
+    0x8 thisobj:*fBase_c;
+}
+
 structure fBase_c:-:0x64 {
     0x0 uniqueInstanceNum:!u32;
     0x4 objectFlags:u32;
@@ -36,7 +96,9 @@ structure dBaseActor_c:dBase_c:0xb5 {
     +0xb4 isVisible:u8;
 }
 
-structure dActor_c:dBaseActor_c:0x26d {}
+structure dActor_c:dBaseActor_c:0x26d {
+    +0x223 isFacingLeft:u8;
+}
 
 structure dWmActor_c:dBaseActor_c:0xd4 {}
 
@@ -85,6 +147,15 @@ structure dBg_c:dBase_c:0x90a3c {
     0x9003c autoscroll2:dBg_autoScroll_c;
 }
 
+structure dEn_c:dActor_c:0x193 {
+    +0x1e demoState:sStateMethodUsr_FI_c;
+    +0x5a state:sStateMethodUsr_FI_c;
+}
+
+structure dEnBoss_c:dEn_c:0xd8 {
+
+}
+
 structure vec3:-:0xc {
     0x0 x:float;
     0x4 y:float;
@@ -131,7 +202,7 @@ structure GAMEOVER:dScene_c:0x0 {}
 structure GAME_SETUP:dScene_c:0x0 {}
 structure MULTI_PLAY_COURSE_SELECT:dScene_c:0x0 {}
 structure CURSOR:dBase_c:0x0 {}
-structure PLAYER:daPlBase_c:0x0 {}
+structure PLAYER:daPlBase_c:0x1832 {}
 structure YOSHI:daPlBase_c:0x0 {}
 structure WM_TEST:dWmActor_c:0x0 {}
 structure WM_TEST2:dWmActor_c:0x0 {}
@@ -141,3 +212,17 @@ structure EN_OBJ_POL:daEnOP_c:0x0 {}
 structure AC_GEAR_GYRATION:dActor_c:0x0 {}
 structure AC_LIFT_FALL:dActorState_c:0x0 {}
 structure OBJ_CENTER2:dActor_c:0x0 {}
+
+structure EN_BOSS_KOOPA:dEnBoss_c:0xfcc {
+    0x70c fireCounterSecondPhase:u32;
+    0x710 fireCounter:u32;
+    0x718 shouldJump:u8;
+    0x71c jumpToX:float;
+    0x748 fireAim:vec3;
+    0x76c isSecondPhase:u32;
+    0x770 isThirdPhase:u32;
+    0x774 whatNext:u32;
+    0x77c closestPlayer:*PLAYER;
+    0x784 isWalking:u32;
+    0x788 actionsUntilJump:u32;
+}
