@@ -26,7 +26,7 @@ int decHexToInt(std::string str) {
 std::map<std::string, BasicType *> basicTypes = {
     {std::string("u32"),       new BasicTypeU32()},
     {std::string("ptr"),       new BasicTypePtr()},
-    {std::string("s32"),       new BasicTypeU32()},
+    {std::string("s32"),       new BasicTypeS32()},
     {std::string("u16"),       new BasicTypeU16()},
     {std::string("s16"),       new BasicTypeS16()},
     {std::string("s16angle"),  new BasicTypeS16Ang()},

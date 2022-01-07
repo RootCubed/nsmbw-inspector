@@ -98,7 +98,7 @@ std::string BasicTypeU16::preview(baseTypeStruct d) {
 
 void BasicTypeS16::display(std::string name, baseTypeStruct d) {
     s16 val = _byteswap_ushort(d.data.si16);
-    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_U16, &val)) {
+    if (ImGui::InputScalar(name.c_str(), ImGuiDataType_S16, &val)) {
         DolphinReader::writeU16(d.addr, val);
     }
 }
